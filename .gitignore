@@ -2,5 +2,5 @@
 *.o
 *.swp
 /aex
-/aex.hs
+/Parser.hs
 

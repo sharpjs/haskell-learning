@@ -1,5 +1,14 @@
-{
-module Main where
+{{-
+    Parser
+
+    Part of Aex
+    Copyright (C) 2015 Jeffrey Sharp
+-}
+
+module Parser where
+
+import Lexer
+
 }
 
 %name       parse
@@ -36,24 +45,6 @@ Type        ::                          { Type }
 
 {
 
-data Token
---  = TokenType
-    = TokenInt
-    | TokenIntLit Int
-    | TokenId String
---  | TokenBlockOpen
---  | TokenBlockClose
-    | TokenParenOpen
-    | TokenParenClose
---  | TokenSubOpen
---  | TokenSubClose
---  | TokenEq
---  | TokenAmp
---  | TokenStar
-    | TokenComma
---  | TokenSemi
-    deriving (Eq, Show)
-
 data Type
     = TypeRef String
     | IntType Int Int Signedness
@@ -68,9 +59,6 @@ data Signedness
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
-
-main :: IO ()
-main = print . parse $ [ TokenInt, TokenParenOpen, (TokenIntLit 24), TokenParenClose ]
 
 defaultIntSize = 32
 
