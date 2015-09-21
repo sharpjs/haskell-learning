@@ -1,6 +1,12 @@
+# Build Products
 *.hi
+*.info
 *.o
-*.swp
-/aex
+/Lexer.hs
 /Parser.hs
+/aex
+
+# Temporary
+*.bak
+*.swp
 

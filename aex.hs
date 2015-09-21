@@ -7,9 +7,11 @@
 
 module Main where
 
+import Prelude hiding (lex)
 import Lexer
 import Parser
 
 main :: IO ()
-main = print . parse $ [ TokenInt, TokenParenOpen, (TokenIntLit 24), TokenParenClose ]
+main = print . parse . lex $
+    "type word = struct { x: i16(32), y: u8 & u32[100] }"
 

@@ -3,12 +3,15 @@
 
 build: aex
 
-aex: Parser.hs force
-	ghc --make $@
+aex: Lexer.hs Parser.hs force
+	ghc --make -fno-warn-tabs $@
+
+%.hs: %.x
+	~/.cabal/bin/alex -g $<
 
 %.hs: %.y
 	~/.cabal/bin/happy -gac $<
 
 clean:
-	rm aex *.o *.hi Parser.hs
+	rm -f aex *.o *.hi Lexer.hs Parser.hs
 

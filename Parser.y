@@ -1,4 +1,5 @@
-{{-
+{
+{-
     Parser
 
     Part of Aex
@@ -8,59 +9,81 @@
 module Parser where
 
 import Lexer
-
+import AST
 }
 
 %name       parse
-%tokentype  { Token }
 %error      { parseError }
-
+%tokentype  { Token }
 %token
---  type    { TokenType }
-    int     { TokenInt }
-    num     { TokenIntLit $$ }
-    id      { TokenId $$ }
---  '{'     { TokenBlockOpen }
---  '}'     { TokenBlockClose }
-    '('     { TokenParenOpen }
-    ')'     { TokenParenClose }
---  '['     { TokenSubOpen }
---  ']'     { TokenSubClose }
---  '='     { TokenEq }
---  '&'     { TokenAmp }
---  '*'     { TokenStar }
---  '+'     { TokenStar }
-    ','     { TokenComma }
---  ';'     { TokenSemi }
+    id      { Id     $$ }
+    i       { LitInt $$ }
+    type    { TypeKw    }
+    struct  { StructKw  }
+    union   { UnionKw   }
+    '{'     { BlockL    }
+    '}'     { BlockR    }
+    '('     { ParenL    }
+    ')'     { ParenR    }
+    '['     { BrackL    }
+    ']'     { BrackR    }
+    '&'     { Amper     }
+    '='     { EqOp      }
+    '@'     { At        }
+--  '*'     { Star      }
+--  '+'     { Plus      }
+--  ','     { Comma     }
+    ':'     { Colon     }
+    ','     { Comma     }
+--  ';'     { Semi      }
 
 %%
 
-Type        ::                          { Type }
-            : id                        { TypeRef $1 }
-            | int                       { IntType defaultIntSize defaultIntSize Unsigned }
-            | int '(' num ')'           { IntType $3 $3 Unsigned }
-            | int '(' num ',' num ')'   { IntType $3 $5 Unsigned }
---          | Type '+'                  { SignedType $1 }
---          | Type '&'                  { PointerType $1 }
+Stmt        :: { Stmt }
+            : type id '=' Type          { TypeDef $2 $4    }
+            | id ':'                    { Label   $1       }
+            | id ':' Type               { Bss     $1 $3    }
+            | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
+            | id ':' Type '@' AtomExp   { Alias   $1 $3 $5 }
+
+Exp         :: { Exp }
+            : AtomExp                   { $1 }
+
+AtomExp     :: { Exp }
+            : id                        { IdVal $1 }
+            | i                         { IntVal $1 }
+            | '(' AtomExp ')'           { $2 }
+--          | '[' Ind ']'
+
+--Loc :: { Loc }
+--    : id { ValueRef $1 }
+--    | 
+
+
+Type        :: { Type }
+            : Type0                     {            $1           }
+            | Type '&'                  { PtrType    $1 (Nothing) }
+            | Type '&' Type0            { PtrType    $1 (Just $3) }
+
+Type0       :: { Type }
+            : id                        { TypeRef    $1           }
+            | Type0 '['   ']'           { ArrayType  $1 (Nothing) }
+            | Type0 '[' i ']'           { ArrayType  $1 (Just $3) }
+            | Type0 '(' i ')'           { TypeWidth  $1 $3        }
+            | struct '{' Members '}'    { StructType (reverse $3) }
+            | union  '{' Members '}'    { UnionType  (reverse $3) }
+
+Members     :: { [Member] }
+            : Member                    { [$1]     }
+            | Members ',' Member        { $3:$1    }
+
+Member      :: { Member }
+            : id ':' Type               { Member $1 $3 }
 
 {
-
-data Type
-    = TypeRef String
-    | IntType Int Int Signedness
---  | SignedType Type
---  | PointerType Type
-    deriving (Eq, Show)
-
-data Signedness
-    = Signed
-    | Unsigned
-    deriving (Eq, Show)
-
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
-
-defaultIntSize = 32
-
 }
+
+-- vim: ft=happy
 
