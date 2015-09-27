@@ -18,9 +18,9 @@ import AST
 %token
     id      { Id     $$ }
     i       { LitInt $$ }
-    type    { TypeKw    }
-    struct  { StructKw  }
-    union   { UnionKw   }
+    type    { KwType    }
+    struct  { KwStruct  }
+    union   { KwUnion   }
     '{'     { BlockL    }
     '}'     { BlockR    }
     '('     { ParenL    }

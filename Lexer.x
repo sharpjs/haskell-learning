@@ -35,9 +35,9 @@ $id     = [$id0 $dec]
 \r \n? | \n         ; -- newline
 "//" .*             ; -- comment
 
-type                { yield TypeKw   }
-struct              { yield StructKw }
-union               { yield UnionKw  }
+type                { yield KwType   }
+struct              { yield KwStruct }
+union               { yield KwUnion  }
 
 $id0 $id*           { ident }
 
@@ -60,9 +60,9 @@ $id0 $id*           { ident }
 
 {
 data Token
-    = TypeKw
-    | StructKw
-    | UnionKw
+    = KwType
+    | KwStruct
+    | KwUnion
     | Id        String
     | LitInt    Integer
     | BlockL
