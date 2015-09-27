@@ -1,5 +1,9 @@
+# TODO: Should I use Cabal for this?
 
-.PHONY: force clean
+.PHONY: build test clean force
+
+test: build
+	./aex
 
 build: aex
 
