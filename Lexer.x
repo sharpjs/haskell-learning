@@ -222,11 +222,9 @@ getNextToken = do
         AlexEOF                -> trace "EOF"   $ return Eof
         AlexSkip  inp' len     -> trace "Skip"  $ setInput inp' >> getNextToken
         AlexToken inp' len act -> trace ("Token " ++ show inp') $ setInput inp' >> act input len
-        AlexError inp'         -> trace ("Error " ++ show inp') $ do
-            setInput inp'
-            addError "lexical error"
-            error "Need to skip over errors somehow."
-            getNextToken
+        AlexError inp'         -> do
+            traceM $ "Error " ++ show inp'
+            error  $ "Need to skip over errors somehow."
 
 lex :: String -> [Token]
 lex input =
