@@ -27,7 +27,7 @@ import AST
     ')'     { ParenR    }
     '['     { BrackL    }
     ']'     { BrackR    }
-    '&'     { Amper     }
+    '&'     { Amper  $$ }
     '='     { EqOp      }
     '@'     { At        }
 --  '*'     { Star      }
