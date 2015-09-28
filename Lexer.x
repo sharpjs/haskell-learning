@@ -214,17 +214,20 @@ addError :: String -> Lex ()
 addError e = Lex $
     \st @ LexState { lex_errs=es } -> ((), st { lex_errs=(e:es) })
 
-getNextToken :: Lex Token
-getNextToken = do
+nextToken :: Lex Token
+nextToken = do
     input <- getInput
     code  <- getStartCode
     case alexScan input code of
-        AlexEOF                -> trace "EOF"   $ return Eof
-        AlexSkip  inp' len     -> trace "Skip"  $ setInput inp' >> getNextToken
-        AlexToken inp' len act -> trace ("Token " ++ show inp') $ setInput inp' >> act input len
-        AlexError inp'         -> do
-            traceM $ "Error " ++ show inp'
-            error  $ "Need to skip over errors somehow."
+        AlexEOF                -> traceM "EOF"   >> return Eof
+        AlexSkip  inp' len     -> traceM "Skip"  >> setInput inp' >> nextToken
+        AlexToken inp' len act ->
+            traceM ("Token " ++ show inp') >> setInput inp' >> act input len
+        AlexError _            -> do
+            error $  "Unmatched input during lexical analysis.  "
+                  ++ "This is probably a compiler bug.\n"
+                  ++ "  input: " ++ show input ++ "\n"
+                  ++ "  state: " ++ show code  ++ "\n"
 
 lex :: String -> [Token]
 lex input =
@@ -238,7 +241,7 @@ lex input =
             , lex_errs  = []
             }
         loop = do
-            tok <- getNextToken
+            tok <- nextToken
             case tok of
                 Eof -> return []
                 _   -> do
