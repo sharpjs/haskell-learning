@@ -34,21 +34,21 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 
 :-
 
-[\ \t]+             ; -- whitespace
-\r \n? | \n         ; -- newline
-"//" .*             ; -- comment
+<0> [\ \t]+                 ; -- whitespace
+<0> \r \n? | \n             ; -- newline
+<0> "//" .*                 ; -- comment
 
-type                { yield KwType   }
-struct              { yield KwStruct }
-union               { yield KwUnion  }
+<0> type                    { yield KwType   }
+<0> struct                  { yield KwStruct }
+<0> union                   { yield KwUnion  }
 
--- $id0 $id*           { ident }
--- 
---    $dec [$hex _]*   { int 0 10 }
--- 0x $hex [$dec _]*   { int 2 16 }
--- 0o $oct [$oct _]*   { int 2  8 }
--- 0b $bin [$bin _]*   { int 2  2 }
--- 
+<0> $id0 $id*               { ident }
+
+<0>      $dec [$dec _]*     { int 0 10 }
+<0> 0x_* $hex [$dec _]*     { int 2 16 }
+<0> 0o_* $oct [$oct _]*     { int 2  8 }
+<0> 0b_* $bin [$bin _]*     { int 2  2 }
+
 -- \{                  { yield BlockL }
 -- \}                  { yield BlockR }
 -- \(                  { yield ParenL }
@@ -126,7 +126,7 @@ data In = In Pos    -- position
              Char   -- previous character
              [Byte] -- rest of bytes of current character
              String -- current input
-    deriving (Show)
+          deriving (Show)
 
 type Byte = Word8
 type AlexInput = In
@@ -139,7 +139,7 @@ alexGetByte (In p c (b:bs) s    ) = Just (b, In p c bs s)
 alexGetByte (In _ _ []     []   ) = Nothing
 alexGetByte (In p _ []     (c:s)) = let p'     = p `move` c 
                                         (b:bs) = encodeUtf8 c
-                                    in  p' `seq`  Just (b, In p' c bs s)
+                                    in  p' `seq` Just (b, In p' c bs s)
 
 encodeUtf8 :: Char -> [Byte]
 encodeUtf8 = map fromIntegral . encode . ord
@@ -258,34 +258,31 @@ type LexAction a = In -> Int -> Lex a
 yield :: t -> LexAction t
 yield t _ _ = return t
 
--- ident :: AlexAction Token
--- ident (_, _, _, str) len =
---     return . Id $ take len str
--- 
--- int :: Int -> Int -> AlexAction Token
--- int pfx base (_, _, _, str) len =
---     return . LitInt $ parseInt base str'
---       where
---         len' = len - pfx
---         str' = take len' . drop pfx $ str
--- 
--- parseInt :: Int -> String -> Integer
--- parseInt base str =
---     foldl' accum 0 digits
---       where
---         accum v c = v * base' + value c
---         base'     = toInteger base
---         value c   = toInteger $ digitToInt c
---         digits    = filter isHexDigit str
--- 
--- op :: Int -> (String -> Token) -> AlexAction Token
+ident :: LexAction Token
+ident (In _ _ _ str) len =
+    return . Id . take len $ str
+
+int :: Int -> Int -> LexAction Token
+int pfx base inp len =
+    return . LitInt . parseInt base . text pfx len $ inp
+
+parseInt :: Int -> String -> Integer
+parseInt base str =
+    foldl' accum 0 digits
+      where
+        accum v c = v * base' + value c
+        base'     = toInteger base
+        value c   = toInteger $ digitToInt c
+        digits    = filter isHexDigit str
+
+-- op :: Int -> (String -> Token) -> LexAction Token
 -- op pfx tok inp len =
 --     return . tok $ text pfx inp len
--- 
--- text :: Int -> AlexInput -> Int -> String
--- text pfx (_, _, _, str) len =
---     take (len - pfx) . drop pfx $ str
--- }
+
+text :: Int -> Int -> In -> String
+text pfx len (In _ _ _ str) =
+    take (len - pfx) . drop pfx $ str
+}
 
 -- vim: ft=alex
 
