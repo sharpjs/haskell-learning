@@ -215,10 +215,12 @@ nextToken = do
     input <- getInput
     code  <- getStartCode
     case alexScan input code of
-        AlexEOF                -> traceM "EOF"   >> return Eof
-        AlexSkip  inp' len     -> traceM "Skip"  >> setInput inp' >> nextToken
-        AlexToken inp' len act ->
-            traceM ("Token " ++ show inp') >> setInput inp' >> act input len
+        AlexEOF                -> return Eof
+        AlexSkip  inp' len     -> setInput inp' >> nextToken
+        AlexToken inp' len act -> do
+            traceM $ "Token " ++ show inp'
+            setInput inp'
+            let In p _ _ s = input in  act $ LexMatch p len s
         AlexError _            -> do
             error $  "Unmatched input during lexical analysis.  "
                   ++ "This is probably a compiler bug.\n"
@@ -247,23 +249,45 @@ lex input =
     in  a
 
 -- -----------------------------------------------------------------------------
+-- Matches
+
+data LexMatch = LexMatch
+    Pos     -- position
+    Int     -- length
+    String  -- input
+
+pos :: LexMatch -> Pos
+pos (LexMatch p _ _) = p
+
+len :: LexMatch -> Int
+len (LexMatch _ l _) = l
+
+text :: LexMatch -> String
+text (LexMatch _ l s) = take l s
+
+-- -----------------------------------------------------------------------------
 -- Actions
 
-type LexAction a = In -> Int -> Lex a
+type LexAction a = LexMatch -> Lex a
 
+-- Return a value regardless of the match
 yield :: t -> LexAction t
-yield t _ _ = return t
+yield t _ =
+    return t
 
+-- Return an identifier token
 ident :: LexAction Token
-ident (In _ _ _ str) len =
-    return . Id . take len $ str
+ident =
+    return . Id . text
 
+-- Return an integer literal token, ignoring prefix chars
 int :: Int -> Int -> LexAction Token
-int pfx base inp len =
-    return . LitInt . parseInt base . text pfx len $ inp
+int pfx base =
+    return . LitInt . evalInt base . drop pfx . text
 
-parseInt :: Int -> String -> Integer
-parseInt base str =
+-- Return the integer represented by a string
+evalInt :: Int -> String -> Integer
+evalInt base str =
     foldl' accum 0 digits
       where
         accum v c = v * base' + value c
@@ -275,10 +299,6 @@ parseInt base str =
 -- op pfx tok inp len =
 --     return . tok $ text pfx inp len
 
-text :: Int -> Int -> In -> String
-text pfx len (In _ _ _ str) =
-    take (len - pfx) . drop pfx $ str
 }
-
 -- vim: ft=alex
 
