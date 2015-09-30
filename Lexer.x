@@ -220,7 +220,8 @@ nextToken = do
         AlexToken inp' len act -> do
             traceM $ "Token " ++ show inp'
             setInput inp'
-            let In p _ _ s = input in  act $ LexMatch p len s
+            act $ LexMatch pos len text
+              where In pos _ _ text = input
         AlexError _            -> do
             error $  "Unmatched input during lexical analysis.  "
                   ++ "This is probably a compiler bug.\n"
