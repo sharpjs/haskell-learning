@@ -45,27 +45,27 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 <0> 0o_* $oct [$oct _]*     { int 2  8 }
 <0> 0b_* $bin [$bin _]*     { int 2  2 }
 
--- \{                  { yield BlockL }
--- \}                  { yield BlockR }
--- \(                  { yield ParenL }
--- \)                  { yield ParenR }
--- \[                  { yield BrackL }
--- \]                  { yield BrackR }
--- 
--- "*"  $op*           { op 1 Star  }
--- "/"  $op*           { op 1 Slash }
--- "%"  $op*           { op 1 Pct   }
--- "+"  $op*           { op 1 Plus  }
--- "-"  $op*           { op 1 Minus }
--- "<<" $op*           { op 2 OpShl }
--- ">>" $op*           { op 2 OpShr }
--- "&"  $op*           { op 1 Amper }
--- "^"  $op*           { op 1 Caret }
--- "|"  $op*           { op 1 Pipe  }
--- \=                  { yield EqOp   }
--- \@                  { yield At     }
--- \:                  { yield Colon  }
--- \,                  { yield Comma  }
+\{                  { yield BlockL }
+\}                  { yield BlockR }
+\(                  { yield ParenL }
+\)                  { yield ParenR }
+\[                  { yield BrackL }
+\]                  { yield BrackR }
+
+"*"  $op*           { op 1 Star  }
+"/"  $op*           { op 1 Slash }
+"%"  $op*           { op 1 Pct   }
+"+"  $op*           { op 1 Plus  }
+"-"  $op*           { op 1 Minus }
+"<<" $op*           { op 2 OpShl }
+">>" $op*           { op 2 OpShr }
+"&"  $op*           { op 1 Amper }
+"^"  $op*           { op 1 Caret }
+"|"  $op*           { op 1 Pipe  }
+\=                  { yield EqOp   }
+\@                  { yield At     }
+\:                  { yield Colon  }
+\,                  { yield Comma  }
 
 {
 data Token
@@ -296,10 +296,11 @@ evalInt base str =
         value c   = toInteger $ digitToInt c
         digits    = filter isHexDigit str
 
--- op :: Int -> (String -> Token) -> LexAction Token
--- op pfx tok inp len =
---     return . tok $ text pfx inp len
+op :: Int -> (String -> Token) -> LexAction Token
+op pfx tok =
+    return . tok . drop pfx . text
 
 }
+
 -- vim: ft=alex
 
