@@ -30,44 +30,45 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 
 :-
 
-<0> [\ \t]+                 ; -- whitespace
-<0> \r \n? | \n             ; -- newline
-<0> "//" .*                 ; -- comment
+<0> [\ \t]+             ; -- whitespace
+<0> \r \n? | \n         ; -- newline
+<0> "//" .*             ; -- comment
 
-<0> type                    { yield KwType   }
-<0> struct                  { yield KwStruct }
-<0> union                   { yield KwUnion  }
+<0> type                { yield $ const KwType   }
+<0> struct              { yield $ const KwStruct }
+<0> union               { yield $ const KwUnion  }
 
-<0> $id0 $id*               { ident }
+<0> $id0 $id*           { yield $ Id }
 
-<0>      $dec [$dec _]*     { int 0 10 }
-<0> 0x_* $hex [$dec _]*     { int 2 16 }
-<0> 0o_* $oct [$oct _]*     { int 2  8 }
-<0> 0b_* $bin [$bin _]*     { int 2  2 }
+<0>      $dec [$dec _]* { yield $ LitInt . evalInt 10 }
+<0> 0x_* $hex [$dec _]* { yield $ LitInt . evalInt 16 . drop 2 }
+<0> 0o_* $oct [$oct _]* { yield $ LitInt . evalInt  8 . drop 2 }
+<0> 0b_* $bin [$bin _]* { yield $ LitInt . evalInt  2 . drop 2 }
 
-\{                  { yield BlockL }
-\}                  { yield BlockR }
-\(                  { yield ParenL }
-\)                  { yield ParenR }
-\[                  { yield BrackL }
-\]                  { yield BrackR }
+<0> \{                  { yield $ const BlockL }
+<0> \}                  { yield $ const BlockR }
+<0> \(                  { yield $ const ParenL }
+<0> \)                  { yield $ const ParenR }
+<0> \[                  { yield $ const BrackL }
+<0> \]                  { yield $ const BrackR }
 
-"*"  $op*           { op 1 Star  }
-"/"  $op*           { op 1 Slash }
-"%"  $op*           { op 1 Pct   }
-"+"  $op*           { op 1 Plus  }
-"-"  $op*           { op 1 Minus }
-"<<" $op*           { op 2 OpShl }
-">>" $op*           { op 2 OpShr }
-"&"  $op*           { op 1 Amper }
-"^"  $op*           { op 1 Caret }
-"|"  $op*           { op 1 Pipe  }
-\=                  { yield EqOp   }
-\@                  { yield At     }
-\:                  { yield Colon  }
-\,                  { yield Comma  }
+<0> "*"  $op*           { yield $ Star  . drop 1 }
+<0> "/"  $op*           { yield $ Slash . drop 1 }
+<0> "%"  $op*           { yield $ Pct   . drop 1 }
+<0> "+"  $op*           { yield $ Plus  . drop 1 }
+<0> "-"  $op*           { yield $ Minus . drop 1 }
+<0> "<<" $op*           { yield $ OpShl . drop 2 }
+<0> ">>" $op*           { yield $ OpShr . drop 2 }
+<0> "&"  $op*           { yield $ Amper . drop 1 }
+<0> "^"  $op*           { yield $ Caret . drop 1 }
+<0> "|"  $op*           { yield $ Pipe  . drop 1 }
+<0> \=                  { yield $ const EqOp   }
+<0> \@                  { yield $ const At     }
+<0> \:                  { yield $ const Colon  }
+<0> \,                  { yield $ const Comma  }
 
 {
+
 data Token
     = KwType
     | KwStruct
@@ -271,20 +272,9 @@ text (LexMatch _ l s) = take l s
 
 type LexAction a = LexMatch -> Lex a
 
--- Return a value regardless of the match
-yield :: t -> LexAction t
-yield t _ =
-    return t
-
--- Return an identifier token
-ident :: LexAction Token
-ident =
-    return . Id . text
-
--- Return an integer literal token, ignoring prefix chars
-int :: Int -> Int -> LexAction Token
-int pfx base =
-    return . LitInt . evalInt base . drop pfx . text
+-- Yields a value to the lexer's result stream
+yield :: (String -> t) -> LexAction t
+yield f m = return . f . text $ m
 
 -- Return the integer represented by a string
 evalInt :: Int -> String -> Integer
@@ -295,10 +285,6 @@ evalInt base str =
         base'     = toInteger base
         value c   = toInteger $ digitToInt c
         digits    = filter isHexDigit str
-
-op :: Int -> (String -> Token) -> LexAction Token
-op pfx tok =
-    return . tok . drop pfx . text
 
 }
 
