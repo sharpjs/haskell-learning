@@ -1,4 +1,5 @@
 {
+
 {-
     Lexer
 
@@ -14,7 +15,7 @@ import Data.Char (digitToInt, isHexDigit)
 import Data.List (foldl')
 import Data.Word (Word8)
 import Debug.Trace
-import Numeric
+
 }
 
 $hex    = [0-9 a-f A-F]
