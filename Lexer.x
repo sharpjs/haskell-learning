@@ -14,7 +14,6 @@ import Data.Bits ((.&.), shiftR)
 import Data.Char (digitToInt, isHexDigit)
 import Data.List (foldl')
 import Data.Word (Word8)
-import Debug.Trace
 
 }
 
@@ -220,7 +219,6 @@ nextToken = do
         AlexEOF                -> return Eof
         AlexSkip  inp' len     -> setInput inp' >> nextToken
         AlexToken inp' len act -> do
-            traceM $ "Token " ++ show inp'
             setInput inp'
             act $ LexMatch pos len text
               where In pos _ _ text = input
@@ -277,13 +275,13 @@ type LexAction a = LexMatch -> Lex a
 yield :: (String -> t) -> LexAction t
 yield f m = return . f . text $ m
 
--- Return the integer represented by a string
+-- Returns the integer represented by a string
 evalInt :: Int -> String -> Integer
 evalInt base str =
     foldl' accum 0 digits
       where
         accum v c = v * base' + value c
-        base'     = toInteger base
+        base'     = toInteger $ base
         value c   = toInteger $ digitToInt c
         digits    = filter isHexDigit str
 
