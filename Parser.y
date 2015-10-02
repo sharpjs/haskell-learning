@@ -35,9 +35,15 @@ import AST
 --  ','     { Comma     }
     ':'     { Colon     }
     ','     { Comma     }
---  ';'     { Semi      }
+    ';'     { Eos       }
 
 %%
+
+Stmts       :: { [Stmt] }
+            : {-empty-}                 { []         }
+            | Stmt                      { [$1]       }
+            | Stmts ';' {-empty-}       { $1         }
+            | Stmts ';' Stmt            { $1 ++ [$3] }
 
 Stmt        :: { Stmt }
             : type id '=' Type          { TypeDef $2 $4    }
