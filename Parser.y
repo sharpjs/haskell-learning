@@ -76,12 +76,12 @@ Type0       :: { Type }
             | Type0 '['   ']'           { ArrayType  $1 (Nothing) }
             | Type0 '[' i ']'           { ArrayType  $1 (Just $3) }
             | Type0 '(' i ')'           { TypeWidth  $1 $3        }
-            | struct '{' Members '}'    { StructType (reverse $3) }
-            | union  '{' Members '}'    { UnionType  (reverse $3) }
+            | struct '{' Members '}'    { StructType $3 }
+            | union  '{' Members '}'    { UnionType  $3 }
 
 Members     :: { [Member] }
-            : Member                    { [$1]     }
-            | Members ',' Member        { $3:$1    }
+            : Member                    { [$1] }
+            | Members ',' Member        { $1 ++ [$3] }
 
 Member      :: { Member }
             : id ':' Type               { Member $1 $3 }
