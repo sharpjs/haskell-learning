@@ -17,6 +17,9 @@ import Data.Word (Word8)
 
 }
 
+$ws     = [\  \t]
+$eos    = [\r \n \;]
+
 $hex    = [0-9 a-f A-F]
 $dec    = [0-9]
 $oct    = [0-7]
@@ -30,9 +33,10 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 
 :-
 
-<0> [\ \t]+             ; -- whitespace
-<0> \r \n? | \n         ; -- newline
+<0> $ws+                ; -- whitespace
 <0> "//" .*             ; -- comment
+
+<0> [$eos] [$ws $eos]*  { yield $ const Eos }
 
 <0> type                { yield $ const KwType   }
 <0> struct              { yield $ const KwStruct }
@@ -95,6 +99,7 @@ data Token
     | At
     | Colon
     | Comma
+    | Eos
     | Eof
     deriving (Eq, Show)
 
