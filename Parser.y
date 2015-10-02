@@ -61,10 +61,6 @@ AtomExp     :: { Exp }
             | '(' AtomExp ')'           { $2 }
 --          | '[' Ind ']'
 
---Loc :: { Loc }
---    : id { ValueRef $1 }
---    | 
-
 
 Type        :: { Type }
             : Type0                     {            $1           }
@@ -88,7 +84,7 @@ Member      :: { Member }
 
 {
 parseError :: [Token] -> a
-parseError _ = error "Parse error"
+parseError ts = error $ "Parse error " ++ show ts
 }
 
 -- vim: ft=happy
