@@ -174,6 +174,18 @@ data LexState = LexState
     , lex_errs  :: [String] -- accumulated errors
     }
 
+-- Returns a lexer state at the beginning of input
+initLexState :: String -> LexState
+initLexState input = LexState
+    { lex_pos   = bof
+    , lex_input = input
+    , lex_char  = '\n'
+    , lex_bytes = []
+    , lex_code  = 0
+    -- user state
+    , lex_errs  = []
+    }
+
 -- defines a world called 'Lex' that has an operation returning a
 newtype Lex a = Lex { runLex :: LexState -> (a, LexState) }
 
@@ -232,27 +244,6 @@ nextToken = do
                   ++ "This is probably a compiler bug.\n"
                   ++ "  input: " ++ show input ++ "\n"
                   ++ "  state: " ++ show code  ++ "\n"
-
-lex :: String -> [Token]
-lex input =
-    let st = LexState
-            { lex_pos   = bof
-            , lex_input = input
-            , lex_char  = '\0'
-            , lex_bytes = []
-            , lex_code  = 0
-            -- user state
-            , lex_errs  = []
-            }
-        loop = do
-            tok <- nextToken
-            case tok of
-                Eof -> return []
-                _   -> do
-                    toks <- loop
-                    return (tok:toks)
-        (a, _) = runLex loop st
-    in  a
 
 -- -----------------------------------------------------------------------------
 -- Matches

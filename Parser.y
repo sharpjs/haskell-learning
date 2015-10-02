@@ -93,18 +93,8 @@ parseError :: Token -> Lex a
 parseError t = error $ "Parse error " ++ show t
 
 parse' :: String -> [Stmt]
-parse' input =
-    let st = LexState
-            { lex_pos   = bof
-            , lex_input = input
-            , lex_char  = '\0'
-            , lex_bytes = []
-            , lex_code  = 0
-            -- user state
-            , lex_errs  = []
-            }
-        (a, _) = runLex parse st
-    in  a
+parse' = fst . runLex parse . initLexState
+
 }
 
 -- vim: ft=happy
