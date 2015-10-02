@@ -12,7 +12,7 @@ import Lexer
 import AST
 }
 
-%name       parse
+%name       parseM
 %monad      { Lex }
 %lexer      { parseNextToken } { Eof }
 %error      { parseError }
@@ -43,7 +43,7 @@ import AST
 %%
 
 Stmts       :: { [Stmt] }
-            : {-empty-}                 { []         }
+            : {-empty-}                 { [  ]       }
             | Stmt                      { [$1]       }
             | Stmts ';' {-empty-}       { $1         }
             | Stmts ';' Stmt            { $1 ++ [$3] }
@@ -59,7 +59,7 @@ Exp         :: { Exp }
             : AtomExp                   { $1 }
 
 AtomExp     :: { Exp }
-            : id                        { IdVal $1 }
+            : id                        { IdVal  $1 }
             | i                         { IntVal $1 }
             | '(' AtomExp ')'           { $2 }
 --          | '[' Ind ']'
@@ -75,8 +75,8 @@ Type0       :: { Type }
             | Type0 '['   ']'           { ArrayType  $1 (Nothing) }
             | Type0 '[' i ']'           { ArrayType  $1 (Just $3) }
             | Type0 '(' i ')'           { TypeWidth  $1 $3        }
-            | struct '{' Members '}'    { StructType $3 }
-            | union  '{' Members '}'    { UnionType  $3 }
+            | struct '{' Members '}'    { StructType $3           }
+            | union  '{' Members '}'    { UnionType  $3           }
 
 Members     :: { [Member] }
             : Member                    { [$1] }
@@ -86,15 +86,14 @@ Member      :: { Member }
             : id ':' Type               { Member $1 $3 }
 
 {
+parse :: String -> [Stmt]
+parse = fst . runLex parseM . initLexState
+
 parseNextToken :: (Token -> Lex a) -> Lex a
 parseNextToken = (nextToken >>=)
 
 parseError :: Token -> Lex a
 parseError t = error $ "Parse error " ++ show t
-
-parse' :: String -> [Stmt]
-parse' = fst . runLex parse . initLexState
-
 }
 
 -- vim: ft=happy

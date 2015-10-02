@@ -162,7 +162,7 @@ encodeUtf8 = map fromIntegral . encode . ord
                         ]
 
 -- -----------------------------------------------------------------------------
--- Interface
+-- Lexer State
 
 data LexState = LexState
     { lex_pos   :: !Pos     -- current input position
@@ -185,6 +185,9 @@ initLexState input = LexState
     -- user state
     , lex_errs  = []
     }
+
+-- -----------------------------------------------------------------------------
+-- Lexer monad
 
 -- defines a world called 'Lex' that has an operation returning a
 newtype Lex a = Lex { runLex :: LexState -> (a, LexState) }
