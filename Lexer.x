@@ -371,5 +371,5 @@ leaveString _ = do
 -- End Wrapper Code
 }
 
--- vim: ft=alex
+-- vim: ft=haskell-alex
 
