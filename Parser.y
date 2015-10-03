@@ -22,6 +22,7 @@ import AST
     id      { Id     $$ }
     int     { LitInt $$ }
     str     { LitStr $$ }
+    cond    { TCond  $$ }
     type    { KwType    }
     struct  { KwStruct  }
     union   { KwUnion   }
@@ -93,6 +94,7 @@ Stmt        :: { Stmt }
             | id ':' Type               { Bss     $1 $3    }
             | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
             | id ':' Type '@' AtomExp   { Alias   $1 $3 $5 }
+            | Exp                       { Eval    $1       }
 
 Type        :: { Type }
             : Type0                     {            $1           }
@@ -116,32 +118,37 @@ Member      :: { Member }
 
 Exp         :: { Exp }
             : AtomExp                   { $1 }
-            | Exp '.'  id               { Acc  $1    $3 }
-            | '!' Exp %prec UNARY       { Clr  $1    $2 }
-            | '-' Exp %prec UNARY       { Neg  $1    $2 }
-            | '~' Exp %prec UNARY       { Not  $1    $2 }
-            | Exp '*'  Exp              { Mul  $2 $1 $3 }
-            | Exp '/'  Exp              { Div  $2 $1 $3 }
-            | Exp '%'  Exp              { Mod  $2 $1 $3 }
-            | Exp '+'  Exp              { Add  $2 $1 $3 }
-            | Exp '-'  Exp              { Sub  $2 $1 $3 }
-            | Exp '<<' Exp              { Shl  $2 $1 $3 }
-            | Exp '>>' Exp              { Shr  $2 $1 $3 }
-            | Exp '&'  Exp              { And  $2 $1 $3 }
-            | Exp '^'  Exp              { Xor  $2 $1 $3 }
-            | Exp '|'  Exp              { Or   $2 $1 $3 }
-            | Exp '.~' Exp              { BChg $2 $1 $3 }
-            | Exp '.!' Exp              { BChg $2 $1 $3 }
-            | Exp '.=' Exp              { BChg $2 $1 $3 }
-            | Exp '.?' Exp              { BChg $2 $1 $3 }
-            | Exp '<>' Exp              { Cmp  $2 $1 $3 }
-            | Exp '==' Exp              { Eq   $2 $1 $3 }
-            | Exp '!=' Exp              { Neq  $2 $1 $3 }
-            | Exp '<'  Exp              { Lt   $2 $1 $3 }
-            | Exp '>'  Exp              { Gt   $2 $1 $3 }
-            | Exp '<=' Exp              { Lte  $2 $1 $3 }
-            | Exp '>=' Exp              { Gte  $2 $1 $3 }
-            | Exp '=>' Exp              { Is      $1 $3 }
+            | Exp '.' id                { Acc  $1    $3 }
+            | '!' Sel Exp %prec UNARY   { Clr  $2    $3 }
+            | '-' Sel Exp %prec UNARY   { Neg  $2    $3 }
+            | '~' Sel Exp %prec UNARY   { Not  $2    $3 }
+            | Exp '*'  Sel Exp          { Mul  $3 $1 $4 }
+            | Exp '/'  Sel Exp          { Div  $3 $1 $4 }
+            | Exp '%'  Sel Exp          { Mod  $3 $1 $4 }
+            | Exp '+'  Sel Exp          { Add  $3 $1 $4 }
+            | Exp '-'  Sel Exp          { Sub  $3 $1 $4 }
+            | Exp '<<' Sel Exp          { Shl  $3 $1 $4 }
+            | Exp '>>' Sel Exp          { Shr  $3 $1 $4 }
+            | Exp '&'  Sel Exp          { And  $3 $1 $4 }
+            | Exp '^'  Sel Exp          { Xor  $3 $1 $4 }
+            | Exp '|'  Sel Exp          { Or   $3 $1 $4 }
+            | Exp '.~' Sel Exp          { BChg $3 $1 $4 }
+            | Exp '.!' Sel Exp          { BChg $3 $1 $4 }
+            | Exp '.=' Sel Exp          { BChg $3 $1 $4 }
+            | Exp '.?' Sel Exp          { BChg $3 $1 $4 }
+            | Exp '<>' Sel Exp          { Cmp  $3 $1 $4 }
+            | Exp '==' Sel Exp          { Eq   $3 $1 $4 }
+            | Exp '!=' Sel Exp          { Neq  $3 $1 $4 }
+            | Exp '<'  Sel Exp          { Lt   $3 $1 $4 }
+            | Exp '>'  Sel Exp          { Gt   $3 $1 $4 }
+            | Exp '<=' Sel Exp          { Lte  $3 $1 $4 }
+            | Exp '>=' Sel Exp          { Gte  $3 $1 $4 }
+            | Exp '=>' Sel cond         { Is   $3 $1 $4 }
+
+Sel         :: { String }
+            : {- empty -}               { "" }
+            | '{'    '}'                { "" }
+            | '{' id '}'                { $2 }
 
 AtomExp     :: { Exp }
             : id                        { IdVal  $1 }
@@ -149,7 +156,6 @@ AtomExp     :: { Exp }
             | str                       { StrVal $1 }
             | '(' AtomExp ')'           { $2 }
 --          | '[' Ind ']'
-
 
 {
 parse :: String -> [Stmt]

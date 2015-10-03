@@ -13,6 +13,7 @@ data Stmt
     | Bss       String Type
     | Data      String Type Exp
     | Alias     String Type Exp
+    | Eval      Exp
     deriving (Eq, Show)
 
 data Type
@@ -57,7 +58,7 @@ data Exp
     | Gt     String Exp Exp
     | Lte    String Exp Exp
     | Gte    String Exp Exp
-    | Is            Exp Exp
+    | Is     String Exp String
     deriving (Eq, Show)
 
 data Signedness

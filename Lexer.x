@@ -32,6 +32,7 @@ $id0    = [$al _]
 $id     = [$al _ $dec]
 
 $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
+$cond   = $op # \/
 
 :-
 
@@ -83,33 +84,35 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 <0> \:                  { yield $ const Colon  }
 <0> \,                  { yield $ const Comma  }
 
-<0> "!"  $op*           { yield $ OpClr  . drop 1 }
-<0> "~"  $op*           { yield $ OpNot  . drop 1 }
-<0> "*"  $op*           { yield $ OpMul  . drop 1 }
-<0> "/"  $op*           { yield $ OpDiv  . drop 1 }
-<0> "%"  $op*           { yield $ OpMod  . drop 1 }
-<0> "+"  $op*           { yield $ OpAdd  . drop 1 }
-<0> "-"  $op*           { yield $ OpSub  . drop 1 }
-<0> "<<" $op*           { yield $ OpShl  . drop 2 }
-<0> ">>" $op*           { yield $ OpShr  . drop 2 }
-<0> "&"  $op*           { yield $ OpAnd  . drop 1 }
-<0> "^"  $op*           { yield $ OpXor  . drop 1 }
-<0> "|"  $op*           { yield $ OpOr   . drop 1 }
-<0> ".~" $op*           { yield $ OpBChg . drop 2 }
-<0> ".!" $op*           { yield $ OpBClr . drop 2 }
-<0> ".=" $op*           { yield $ OpBSet . drop 2 }
-<0> ".?" $op*           { yield $ OpBTst . drop 2 }
-<0> "<>" $op*           { yield $ OpCmp  . drop 2 }
-<0> "==" $op*           { yield $ OpEq   . drop 2 }
-<0> "!=" $op*           { yield $ OpNeq  . drop 2 }
-<0> "<"  $op*           { yield $ OpLt   . drop 1 }
-<0> ">"  $op*           { yield $ OpGt   . drop 1 }
-<0> "<=" $op*           { yield $ OpLte  . drop 2 }
-<0> ">=" $op*           { yield $ OpGte  . drop 2 }
+<0> "!"                 { yield $ OpClr  . drop 1 }
+<0> "~"                 { yield $ OpNot  . drop 1 }
+<0> "*"                 { yield $ OpMul  . drop 1 }
+<0> "/"                 { yield $ OpDiv  . drop 1 }
+<0> "%"                 { yield $ OpMod  . drop 1 }
+<0> "+"                 { yield $ OpAdd  . drop 1 }
+<0> "-"                 { yield $ OpSub  . drop 1 }
+<0> "<<"                { yield $ OpShl  . drop 2 }
+<0> ">>"                { yield $ OpShr  . drop 2 }
+<0> "&"                 { yield $ OpAnd  . drop 1 }
+<0> "^"                 { yield $ OpXor  . drop 1 }
+<0> "|"                 { yield $ OpOr   . drop 1 }
+<0> ".~"                { yield $ OpBChg . drop 2 }
+<0> ".!"                { yield $ OpBClr . drop 2 }
+<0> ".="                { yield $ OpBSet . drop 2 }
+<0> ".?"                { yield $ OpBTst . drop 2 }
+<0> "<>"                { yield $ OpCmp  . drop 2 }
+<0> "=="                { yield $ OpEq   . drop 2 }
+<0> "!="                { yield $ OpNeq  . drop 2 }
+<0> "<"                 { yield $ OpLt   . drop 1 }
+<0> ">"                 { yield $ OpGt   . drop 1 }
+<0> "<="                { yield $ OpLte  . drop 2 }
+<0> ">="                { yield $ OpGte  . drop 2 }
 <0> "=>"                { yield $ const OpIs }
 
-{
+<0> \/ $cond+ \/        { \m -> return . TCond . take (len m - 2) . drop 1 . text $ m }
 
+-- Begin Wrapper Code
+{
 data Token
     = KwType
     | KwStruct
@@ -149,6 +152,8 @@ data Token
     | OpLte     String
     | OpGte     String
     | OpIs
+    | OpTag     String
+    | TCond     String
     | At
     | Colon
     | Comma
@@ -363,6 +368,7 @@ leaveString _ = do
     setStartCode 0
     return . LitStr . TL.unpack . B.toLazyText $ b
 
+-- End Wrapper Code
 }
 
 -- vim: ft=alex
