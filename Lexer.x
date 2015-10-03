@@ -77,24 +77,29 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 <0> \[                  { yield $ const BrackL }
 <0> \]                  { yield $ const BrackR }
 
-<0> "!"  $op*           { yield $ OpClr . drop 1 }
-<0> "~"  $op*           { yield $ Tilde . drop 1 }
-<0> "*"  $op*           { yield $ Star  . drop 1 }
-<0> "/"  $op*           { yield $ Slash . drop 1 }
-<0> "%"  $op*           { yield $ Pct   . drop 1 }
-<0> "+"  $op*           { yield $ Plus  . drop 1 }
-<0> "-"  $op*           { yield $ Minus . drop 1 }
-<0> "<<" $op*           { yield $ OpShl . drop 2 }
-<0> ">>" $op*           { yield $ OpShr . drop 2 }
-<0> "&"  $op*           { yield $ Amper . drop 1 }
-<0> "^"  $op*           { yield $ Caret . drop 1 }
-<0> "|"  $op*           { yield $ Pipe  . drop 1 }
-<0> "<>" $op*           { yield $ OpCmp . drop 2 }
-<0> "."                 { yield $ const OpDot  }
-<0> \=                  { yield $ const EqOp   }
+<0> "."                 { yield $ const OpMem  }
 <0> \@                  { yield $ const At     }
+<0> \=                  { yield $ const OpMove }
 <0> \:                  { yield $ const Colon  }
 <0> \,                  { yield $ const Comma  }
+
+<0> "!"  $op*           { yield $ OpClr  . drop 1 }
+<0> "~"  $op*           { yield $ OpNot  . drop 1 }
+<0> "*"  $op*           { yield $ OpMul  . drop 1 }
+<0> "/"  $op*           { yield $ OpDiv  . drop 1 }
+<0> "%"  $op*           { yield $ OpMod  . drop 1 }
+<0> "+"  $op*           { yield $ OpAdd  . drop 1 }
+<0> "-"  $op*           { yield $ OpSub  . drop 1 }
+<0> "<<" $op*           { yield $ OpShl  . drop 2 }
+<0> ">>" $op*           { yield $ OpShr  . drop 2 }
+<0> "&"  $op*           { yield $ OpAnd  . drop 1 }
+<0> "^"  $op*           { yield $ OpXor  . drop 1 }
+<0> "|"  $op*           { yield $ OpOr   . drop 1 }
+<0> ".~" $op*           { yield $ OpBChg . drop 2 }
+<0> ".!" $op*           { yield $ OpBClr . drop 2 }
+<0> ".=" $op*           { yield $ OpBSet . drop 2 }
+<0> ".?" $op*           { yield $ OpBTst . drop 2 }
+<0> "<>" $op*           { yield $ OpCmp  . drop 2 }
 
 {
 
@@ -111,21 +116,25 @@ data Token
     | ParenR
     | BrackL
     | BrackR
+    | OpMem
     | OpClr     String
-    | Tilde     String
-    | Star      String
-    | Slash     String
-    | Pct       String
-    | Plus      String
-    | Minus     String
+    | OpNot     String
+    | OpMul     String
+    | OpDiv     String
+    | OpMod     String
+    | OpAdd     String
+    | OpSub     String
     | OpShl     String
     | OpShr     String
-    | Amper     String
-    | Caret     String
-    | Pipe      String
+    | OpAnd     String
+    | OpXor     String
+    | OpOr      String
+    | OpBChg    String
+    | OpBClr    String
+    | OpBSet    String
+    | OpBTst    String
+    | OpMove
     | OpCmp     String
-    | EqOp
-    | OpDot
     | At
     | Colon
     | Comma

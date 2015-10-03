@@ -32,8 +32,7 @@ data Exp
     = IdVal  String
     | IntVal Integer
     | StrVal String
-    | MemAcc Exp String
-    | BitAcc Exp Integer
+    | Acc    Exp String
     | Clr    String Exp
     | Neg    String Exp
     | Not    String Exp
@@ -47,6 +46,10 @@ data Exp
     | And    String Exp Exp
     | Xor    String Exp Exp
     | Or     String Exp Exp
+    | BChg   String Exp Exp
+    | BClr   String Exp Exp
+    | BSet   String Exp Exp
+    | BTst   String Exp Exp
     | Cmp    String Exp Exp
     deriving (Eq, Show)
 

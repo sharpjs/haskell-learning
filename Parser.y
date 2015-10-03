@@ -32,28 +32,33 @@ import AST
     '['     { BrackL    }
     ']'     { BrackR    }
     '@'     { At        }
-    '='     { EqOp      }
+    '='     { OpMove    }
     ':'     { Colon     }
     ','     { Comma     }
     ';'     { Eos       }
-    '.'     { OpDot     }
+    '.'     { OpMem     }
     '!'     { OpClr  $$ }
-    '~'     { Tilde  $$ }
-    '*'     { Star   $$ }
-    '/'     { Slash  $$ }
-    '%'     { Pct    $$ }
-    '+'     { Plus   $$ }
-    '-'     { Minus  $$ }
+    '~'     { OpNot  $$ }
+    '*'     { OpMul  $$ }
+    '/'     { OpDiv  $$ }
+    '%'     { OpMod  $$ }
+    '+'     { OpAdd  $$ }
+    '-'     { OpSub  $$ }
     '<<'    { OpShl  $$ }
     '>>'    { OpShr  $$ }
-    '&'     { Amper  $$ }
-    '^'     { Caret  $$ }
-    '|'     { Pipe   $$ }
+    '&'     { OpAnd  $$ }
+    '^'     { OpXor  $$ }
+    '|'     { OpOr   $$ }
+    '.~'    { OpBChg $$ }
+    '.!'    { OpBClr $$ }
+    '.='    { OpBSet $$ }
+    '.?'    { OpBTst $$ }
     '<>'    { OpCmp  $$ }
 
 -- Low
 %nonassoc   '<>'
 %right      '='
+%nonassoc   '.~' '.!' '.=' '.?'
 %left       '|' '^'
 %left       '&'
 %left       '<<' '>>'
@@ -103,22 +108,25 @@ Member      :: { Member }
 
 Exp         :: { Exp }
             : AtomExp                   { $1 }
-            | Exp '.' id                { MemAcc $1 $3 }
-            | Exp '.' int               { BitAcc $1 $3 }
-            | '!' Exp %prec UNARY       { Clr $1 $2 }
-            | '-' Exp %prec UNARY       { Neg $1 $2 }
-            | '~' Exp %prec UNARY       { Not $1 $2 }
-            | Exp '*'  Exp              { Mul $2 $1 $3 }
-            | Exp '/'  Exp              { Div $2 $1 $3 }
-            | Exp '%'  Exp              { Mod $2 $1 $3 }
-            | Exp '+'  Exp              { Add $2 $1 $3 }
-            | Exp '-'  Exp              { Sub $2 $1 $3 }
-            | Exp '<<' Exp              { Shl $2 $1 $3 }
-            | Exp '>>' Exp              { Shr $2 $1 $3 }
-            | Exp '&'  Exp              { And $2 $1 $3 }
-            | Exp '^'  Exp              { Xor $2 $1 $3 }
-            | Exp '|'  Exp              { Or  $2 $1 $3 }
-            | Exp '<>' Exp              { Cmp $2 $1 $3 }
+            | Exp '.'  id               { Acc  $1 $3 }
+            | '!' Exp %prec UNARY       { Clr  $1 $2 }
+            | '-' Exp %prec UNARY       { Neg  $1 $2 }
+            | '~' Exp %prec UNARY       { Not  $1 $2 }
+            | Exp '*'  Exp              { Mul  $2 $1 $3 }
+            | Exp '/'  Exp              { Div  $2 $1 $3 }
+            | Exp '%'  Exp              { Mod  $2 $1 $3 }
+            | Exp '+'  Exp              { Add  $2 $1 $3 }
+            | Exp '-'  Exp              { Sub  $2 $1 $3 }
+            | Exp '<<' Exp              { Shl  $2 $1 $3 }
+            | Exp '>>' Exp              { Shr  $2 $1 $3 }
+            | Exp '&'  Exp              { And  $2 $1 $3 }
+            | Exp '^'  Exp              { Xor  $2 $1 $3 }
+            | Exp '|'  Exp              { Or   $2 $1 $3 }
+            | Exp '.~' Exp              { BChg $2 $1 $3 }
+            | Exp '.!' Exp              { BChg $2 $1 $3 }
+            | Exp '.=' Exp              { BChg $2 $1 $3 }
+            | Exp '.?' Exp              { BChg $2 $1 $3 }
+            | Exp '<>' Exp              { Cmp  $2 $1 $3 }
 
 AtomExp     :: { Exp }
             : id                        { IdVal  $1 }
