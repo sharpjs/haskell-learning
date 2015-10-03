@@ -14,7 +14,7 @@ aex: Lexer.hs Parser.hs force
 	~/.cabal/bin/alex -g $<
 
 %.hs: %.y
-	~/.cabal/bin/happy -gac $<
+	~/.cabal/bin/happy -gaci $<
 
 clean:
 	rm -f aex *.o *.hi Lexer.hs Parser.hs
