@@ -89,7 +89,8 @@ StmtOpt     :: { [Stmt] }
             | Stmt                      { [$1] }
 
 Stmt        :: { Stmt }
-            : type id '=' Type          { TypeDef $2 $4    }
+            : '{' Stmts '}'             { Block   $2       }
+            | type id '=' Type          { TypeDef $2 $4    }
             | id ':'                    { Label   $1       }
             | id ':' Type               { Bss     $1 $3    }
             | id ':' Type '=' Exp       { Data    $1 $3 $5 } 

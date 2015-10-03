@@ -8,7 +8,8 @@
 module AST where
 
 data Stmt
-    = TypeDef   String Type
+    = Block     [Stmt]
+    | TypeDef   String Type
     | Label     String
     | Bss       String Type
     | Data      String Type Exp
