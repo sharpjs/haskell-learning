@@ -20,7 +20,8 @@ import AST
 %tokentype  { Token }
 %token
     id      { Id     $$ }
-    i       { LitInt $$ }
+    int     { LitInt $$ }
+    str     { LitStr $$ }
     type    { KwType    }
     struct  { KwStruct  }
     union   { KwUnion   }
@@ -60,7 +61,8 @@ Exp         :: { Exp }
 
 AtomExp     :: { Exp }
             : id                        { IdVal  $1 }
-            | i                         { IntVal $1 }
+            | int                       { IntVal $1 }
+            | str                       { StrVal $1 }
             | '(' AtomExp ')'           { $2 }
 --          | '[' Ind ']'
 
@@ -72,9 +74,9 @@ Type        :: { Type }
 
 Type0       :: { Type }
             : id                        { TypeRef    $1           }
-            | Type0 '['   ']'           { ArrayType  $1 (Nothing) }
-            | Type0 '[' i ']'           { ArrayType  $1 (Just $3) }
-            | Type0 '(' i ')'           { TypeWidth  $1 $3        }
+            | Type0 '['     ']'         { ArrayType  $1 (Nothing) }
+            | Type0 '[' int ']'         { ArrayType  $1 (Just $3) }
+            | Type0 '(' int ')'         { TypeWidth  $1 $3        }
             | struct '{' Members '}'    { StructType $3           }
             | union  '{' Members '}'    { UnionType  $3           }
 

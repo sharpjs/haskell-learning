@@ -1,5 +1,4 @@
 {
-
 {-
     Lexer
 
@@ -11,10 +10,13 @@ module Lexer where
 
 import Prelude hiding (lex)
 import Data.Bits ((.&.), shiftR)
-import Data.Char (digitToInt, isHexDigit)
+import Data.Char (chr, digitToInt, isHexDigit)
 import Data.List (foldl')
+import Data.Monoid
 import Data.Word (Word8)
 
+import qualified Data.Text.Lazy         as TL
+import qualified Data.Text.Lazy.Builder as B
 }
 
 $ws     = [\  \t]
@@ -44,10 +46,29 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 
 <0> $id0 $id*           { yield $ Id }
 
-<0>      $dec [$dec _]* { yield $ LitInt . evalInt 10 }
-<0> 0x_* $hex [$dec _]* { yield $ LitInt . evalInt 16 . drop 2 }
-<0> 0o_* $oct [$oct _]* { yield $ LitInt . evalInt  8 . drop 2 }
-<0> 0b_* $bin [$bin _]* { yield $ LitInt . evalInt  2 . drop 2 }
+<0>      $dec [$dec _]* { yield $ LitInt . fromBase 10          }
+<0> 0x_* $hex [$dec _]* { yield $ LitInt . fromBase 16 . drop 2 }
+<0> 0o_* $oct [$oct _]* { yield $ LitInt . fromBase  8 . drop 2 }
+<0> 0b_* $bin [$bin _]* { yield $ LitInt . fromBase  2 . drop 2 }
+
+<0> \"                  { enterString }
+<str> [^\"\\]           { addToString $ head }
+<str> \\ 0              { addToString $ const '\0' }    -- 00 null
+<str> \\ a              { addToString $ const '\a' }    -- 07 alert
+<str> \\ b              { addToString $ const '\b' }    -- 08 backspace
+<str> \\ e              { addToString $ const '\ESC' }  -- 1B escape
+<str> \\ f              { addToString $ const '\f' }    -- 0C form feed
+<str> \\ n              { addToString $ const '\n' }    -- 0A line feed
+<str> \\ r              { addToString $ const '\r' }    -- 0D carriage return
+<str> \\ t              { addToString $ const '\t' }    -- 09 horizontal tab
+<str> \\ v              { addToString $ const '\v' }    -- 0B vertical tab
+<str> \\ \'             { addToString $ const '\'' }    -- 27 single quote
+<str> \\ \"             { addToString $ const '\"' }    -- 22 double quote
+<str> \\ \\             { addToString $ const '\\' }    -- 5C backslash
+<str> \\ x  $hex{2}     { addToString $ chr . fromInteger . fromBase 16 . drop 2 }
+<str> \\ u\{$hex{1,6}\} { addToString $ chr . fromInteger . fromBase 16 . drop 3 }
+--<str> \\ [^0abefnrtvxu] { failLex "Invalid character escape." }
+<str> \"                { leaveString }
 
 <0> \{                  { yield $ const BlockL }
 <0> \}                  { yield $ const BlockR }
@@ -79,6 +100,7 @@ data Token
     | KwUnion
     | Id        String
     | LitInt    Integer
+    | LitStr    String
     | BlockL
     | BlockR
     | ParenL
@@ -165,13 +187,13 @@ encodeUtf8 = map fromIntegral . encode . ord
 -- Lexer State
 
 data LexState = LexState
-    { lex_pos   :: !Pos     -- current input position
-    , lex_input :: String   -- current input
-    , lex_char  :: !Char    -- character before current input
-    , lex_bytes :: [Byte]   -- remaining bytes of current character
-    , lex_code  :: !Int     -- current startcode
-    -- user state
-    , lex_errs  :: [String] -- accumulated errors
+    { lex_pos   :: !Pos         -- current input position
+    , lex_input :: String       -- current input
+    , lex_char  :: !Char        -- character before current input
+    , lex_bytes :: [Byte]       -- remaining bytes of current character
+    , lex_code  :: !Int         -- current startcode
+    , lex_str   :: B.Builder    -- accumulated string literal
+    , lex_errs  :: [String]     -- accumulated errors
     }
 
 -- Returns a lexer state at the beginning of input
@@ -182,7 +204,7 @@ initLexState input = LexState
     , lex_char  = '\n'
     , lex_bytes = []
     , lex_code  = 0
-    -- user state
+    , lex_str   = B.fromString ""
     , lex_errs  = []
     }
 
@@ -226,6 +248,14 @@ getStartCode = Lex $
 setStartCode :: Int -> Lex ()
 setStartCode c = Lex $
     \st -> ((), st { lex_code=c })
+
+getStr :: Lex B.Builder
+getStr = Lex $
+    \st @ LexState { lex_str=c } -> (c, st)
+
+setStr :: B.Builder -> Lex ()
+setStr c = Lex $
+    \st -> ((), st { lex_str=c })
 
 addError :: String -> Lex ()
 addError e = Lex $
@@ -275,14 +305,32 @@ yield :: (String -> t) -> LexAction t
 yield f m = return . f . text $ m
 
 -- Returns the integer represented by a string
-evalInt :: Int -> String -> Integer
-evalInt base str =
+fromBase :: Int -> String -> Integer
+fromBase base str =
     foldl' accum 0 digits
       where
         accum v c = v * base' + value c
         base'     = toInteger $ base
         value c   = toInteger $ digitToInt c
         digits    = filter isHexDigit str
+
+enterString :: LexAction Token
+enterString _ = do
+    setStartCode str
+    nextToken
+
+addToString :: (String -> Char) -> LexAction Token
+addToString f m = do
+    b <- getStr
+    setStr $ b <> (B.singleton . f . text $ m)
+    nextToken
+
+leaveString :: LexAction Token
+leaveString _ = do
+    b <- getStr
+    setStr . B.fromString $ ""
+    setStartCode 0
+    return . LitStr . TL.unpack . B.toLazyText $ b
 
 }
 

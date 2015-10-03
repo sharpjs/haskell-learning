@@ -31,6 +31,7 @@ data Member
 data Exp
     = IdVal  String
     | IntVal Integer
+    | StrVal String
     deriving (Eq, Show)
 
 data Signedness
