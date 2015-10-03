@@ -32,6 +32,22 @@ data Exp
     = IdVal  String
     | IntVal Integer
     | StrVal String
+    | MemAcc Exp String
+    | BitAcc Exp Integer
+    | Clr    String Exp
+    | Neg    String Exp
+    | Not    String Exp
+    | Mul    String Exp Exp
+    | Div    String Exp Exp
+    | Mod    String Exp Exp
+    | Add    String Exp Exp
+    | Sub    String Exp Exp
+    | Shl    String Exp Exp
+    | Shr    String Exp Exp
+    | And    String Exp Exp
+    | Xor    String Exp Exp
+    | Or     String Exp Exp
+    | Cmp    String Exp Exp
     deriving (Eq, Show)
 
 data Signedness

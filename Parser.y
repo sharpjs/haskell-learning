@@ -31,23 +31,48 @@ import AST
     ')'     { ParenR    }
     '['     { BrackL    }
     ']'     { BrackR    }
-    '&'     { Amper  $$ }
-    '='     { EqOp      }
     '@'     { At        }
---  '*'     { Star      }
---  '+'     { Plus      }
---  ','     { Comma     }
+    '='     { EqOp      }
     ':'     { Colon     }
     ','     { Comma     }
     ';'     { Eos       }
+    '.'     { OpDot     }
+    '!'     { OpClr  $$ }
+    '~'     { Tilde  $$ }
+    '*'     { Star   $$ }
+    '/'     { Slash  $$ }
+    '%'     { Pct    $$ }
+    '+'     { Plus   $$ }
+    '-'     { Minus  $$ }
+    '<<'    { OpShl  $$ }
+    '>>'    { OpShr  $$ }
+    '&'     { Amper  $$ }
+    '^'     { Caret  $$ }
+    '|'     { Pipe   $$ }
+    '<>'    { OpCmp  $$ }
+
+-- Low
+%nonassoc   '<>'
+%right      '='
+%left       '|' '^'
+%left       '&'
+%left       '<<' '>>'
+%left       '+' '-'
+%left       '*' '/' '%'
+%nonassoc   '@'
+%right      UNARY '~' '!'
+%left       '.'
+-- High
 
 %%
 
 Stmts       :: { [Stmt] }
-            : {-empty-}                 { [  ]       }
-            | Stmt                      { [$1]       }
-            | Stmts ';' {-empty-}       { $1         }
-            | Stmts ';' Stmt            { $1 ++ [$3] }
+            : StmtOpt                   { $1       }
+            | Stmts ';' StmtOpt         { $1 ++ $3 }
+
+StmtOpt     :: { [Stmt] }
+            : {-empty-}                 { [  ] }
+            | Stmt                      { [$1] }
 
 Stmt        :: { Stmt }
             : type id '=' Type          { TypeDef $2 $4    }
@@ -55,17 +80,6 @@ Stmt        :: { Stmt }
             | id ':' Type               { Bss     $1 $3    }
             | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
             | id ':' Type '@' AtomExp   { Alias   $1 $3 $5 }
-
-Exp         :: { Exp }
-            : AtomExp                   { $1 }
-
-AtomExp     :: { Exp }
-            : id                        { IdVal  $1 }
-            | int                       { IntVal $1 }
-            | str                       { StrVal $1 }
-            | '(' AtomExp ')'           { $2 }
---          | '[' Ind ']'
-
 
 Type        :: { Type }
             : Type0                     {            $1           }
@@ -86,6 +100,33 @@ Members     :: { [Member] }
 
 Member      :: { Member }
             : id ':' Type               { Member $1 $3 }
+
+Exp         :: { Exp }
+            : AtomExp                   { $1 }
+            | Exp '.' id                { MemAcc $1 $3 }
+            | Exp '.' int               { BitAcc $1 $3 }
+            | '!' Exp %prec UNARY       { Clr $1 $2 }
+            | '-' Exp %prec UNARY       { Neg $1 $2 }
+            | '~' Exp %prec UNARY       { Not $1 $2 }
+            | Exp '*'  Exp              { Mul $2 $1 $3 }
+            | Exp '/'  Exp              { Div $2 $1 $3 }
+            | Exp '%'  Exp              { Mod $2 $1 $3 }
+            | Exp '+'  Exp              { Add $2 $1 $3 }
+            | Exp '-'  Exp              { Sub $2 $1 $3 }
+            | Exp '<<' Exp              { Shl $2 $1 $3 }
+            | Exp '>>' Exp              { Shr $2 $1 $3 }
+            | Exp '&'  Exp              { And $2 $1 $3 }
+            | Exp '^'  Exp              { Xor $2 $1 $3 }
+            | Exp '|'  Exp              { Or  $2 $1 $3 }
+            | Exp '<>' Exp              { Cmp $2 $1 $3 }
+
+AtomExp     :: { Exp }
+            : id                        { IdVal  $1 }
+            | int                       { IntVal $1 }
+            | str                       { StrVal $1 }
+            | '(' AtomExp ')'           { $2 }
+--          | '[' Ind ']'
+
 
 {
 parse :: String -> [Stmt]

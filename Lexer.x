@@ -77,6 +77,8 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 <0> \[                  { yield $ const BrackL }
 <0> \]                  { yield $ const BrackR }
 
+<0> "!"  $op*           { yield $ OpClr . drop 1 }
+<0> "~"  $op*           { yield $ Tilde . drop 1 }
 <0> "*"  $op*           { yield $ Star  . drop 1 }
 <0> "/"  $op*           { yield $ Slash . drop 1 }
 <0> "%"  $op*           { yield $ Pct   . drop 1 }
@@ -87,6 +89,8 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 <0> "&"  $op*           { yield $ Amper . drop 1 }
 <0> "^"  $op*           { yield $ Caret . drop 1 }
 <0> "|"  $op*           { yield $ Pipe  . drop 1 }
+<0> "<>" $op*           { yield $ OpCmp . drop 2 }
+<0> "."                 { yield $ const OpDot  }
 <0> \=                  { yield $ const EqOp   }
 <0> \@                  { yield $ const At     }
 <0> \:                  { yield $ const Colon  }
@@ -107,6 +111,8 @@ data Token
     | ParenR
     | BrackL
     | BrackR
+    | OpClr     String
+    | Tilde     String
     | Star      String
     | Slash     String
     | Pct       String
@@ -117,7 +123,9 @@ data Token
     | Amper     String
     | Caret     String
     | Pipe      String
+    | OpCmp     String
     | EqOp
+    | OpDot
     | At
     | Colon
     | Comma
