@@ -54,8 +54,16 @@ import AST
     '.='    { OpBSet $$ }
     '.?'    { OpBTst $$ }
     '<>'    { OpCmp  $$ }
+    '=='    { OpEq   $$ }
+    '!='    { OpNeq  $$ }
+    '<'     { OpLt   $$ }
+    '>'     { OpGt   $$ }
+    '<='    { OpLte  $$ }
+    '>='    { OpGte  $$ }
+    '=>'    { OpIs      }
 
 -- Low
+%nonassoc   '==' '!=' '<' '>' '<=' '>=' '=>'
 %nonassoc   '<>'
 %right      '='
 %nonassoc   '.~' '.!' '.=' '.?'
@@ -108,10 +116,10 @@ Member      :: { Member }
 
 Exp         :: { Exp }
             : AtomExp                   { $1 }
-            | Exp '.'  id               { Acc  $1 $3 }
-            | '!' Exp %prec UNARY       { Clr  $1 $2 }
-            | '-' Exp %prec UNARY       { Neg  $1 $2 }
-            | '~' Exp %prec UNARY       { Not  $1 $2 }
+            | Exp '.'  id               { Acc  $1    $3 }
+            | '!' Exp %prec UNARY       { Clr  $1    $2 }
+            | '-' Exp %prec UNARY       { Neg  $1    $2 }
+            | '~' Exp %prec UNARY       { Not  $1    $2 }
             | Exp '*'  Exp              { Mul  $2 $1 $3 }
             | Exp '/'  Exp              { Div  $2 $1 $3 }
             | Exp '%'  Exp              { Mod  $2 $1 $3 }
@@ -127,6 +135,13 @@ Exp         :: { Exp }
             | Exp '.=' Exp              { BChg $2 $1 $3 }
             | Exp '.?' Exp              { BChg $2 $1 $3 }
             | Exp '<>' Exp              { Cmp  $2 $1 $3 }
+            | Exp '==' Exp              { Eq   $2 $1 $3 }
+            | Exp '!=' Exp              { Neq  $2 $1 $3 }
+            | Exp '<'  Exp              { Lt   $2 $1 $3 }
+            | Exp '>'  Exp              { Gt   $2 $1 $3 }
+            | Exp '<=' Exp              { Lte  $2 $1 $3 }
+            | Exp '>=' Exp              { Gte  $2 $1 $3 }
+            | Exp '=>' Exp              { Is      $1 $3 }
 
 AtomExp     :: { Exp }
             : id                        { IdVal  $1 }

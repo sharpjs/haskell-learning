@@ -51,6 +51,13 @@ data Exp
     | BSet   String Exp Exp
     | BTst   String Exp Exp
     | Cmp    String Exp Exp
+    | Eq     String Exp Exp
+    | Neq    String Exp Exp
+    | Lt     String Exp Exp
+    | Gt     String Exp Exp
+    | Lte    String Exp Exp
+    | Gte    String Exp Exp
+    | Is            Exp Exp
     deriving (Eq, Show)
 
 data Signedness

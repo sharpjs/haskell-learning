@@ -100,6 +100,13 @@ $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 <0> ".=" $op*           { yield $ OpBSet . drop 2 }
 <0> ".?" $op*           { yield $ OpBTst . drop 2 }
 <0> "<>" $op*           { yield $ OpCmp  . drop 2 }
+<0> "==" $op*           { yield $ OpEq   . drop 2 }
+<0> "!=" $op*           { yield $ OpNeq  . drop 2 }
+<0> "<"  $op*           { yield $ OpLt   . drop 1 }
+<0> ">"  $op*           { yield $ OpGt   . drop 1 }
+<0> "<=" $op*           { yield $ OpLte  . drop 2 }
+<0> ">=" $op*           { yield $ OpGte  . drop 2 }
+<0> "=>"                { yield $ const OpIs }
 
 {
 
@@ -135,6 +142,13 @@ data Token
     | OpBTst    String
     | OpMove
     | OpCmp     String
+    | OpEq      String
+    | OpNeq     String
+    | OpLt      String
+    | OpGt      String
+    | OpLte     String
+    | OpGte     String
+    | OpIs
     | At
     | Colon
     | Comma
