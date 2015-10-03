@@ -3,12 +3,12 @@
 .PHONY: build test clean force
 
 test: build
-	./aex
+	time ./aex
 
 build: aex
 
 aex: Lexer.hs Parser.hs force
-	ghc --make -fno-warn-tabs $@
+	ghc --make -O2 -fno-warn-tabs $@
 
 %.hs: %.x
 	~/.cabal/bin/alex -g $<
