@@ -64,6 +64,7 @@ import AST
     '<='    { OpLte     }
     '>='    { OpGte     }
     '=>'    { OpIs      }
+    '->'    { OpFunc    }
 
 -- Low
 %nonassoc   '==' '!=' '<' '>' '<=' '>=' '=>'
@@ -91,22 +92,24 @@ StmtOpt     :: { [Stmt] }
             | Stmt                      { [$1] }
 
 Stmt        :: { Stmt }
-            : '{' Stmts '}'             { Block   $2       }
-            | type id '=' Type          { TypeDef $2 $4    }
-            | id ':'                    { Label   $1       }
-            | id ':' Type               { Bss     $1 $3    }
-            | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
-            | id ':' Type '@' Primary   { Alias   $1 $3 $5 }
-            | Exp                       { Eval    $1       }
+            : '{' Stmts '}'                 { Block   $2       }
+            | type id '=' Type              { TypeDef $2 $4    }
+            | id ':'                        { Label   $1       }
+            | id ':' Type                   { Bss     $1 $3    }
+            | id ':' Type '=' Exp           { Data    $1 $3 $5 } 
+            | id ':' Type '@' Primary       { Alias   $1 $3 $5 }
+            | id ':' FuncType '{' Stmts '}' { Func    $1 $3 $5 }
+            | Exp                           { Eval    $1       }
 
 -- Types
 
 Type        :: { Type }
-            : ArrayType                 {            $1           }
-            | struct '{' Members '}'    { StructType $3           }
-            | union  '{' Members '}'    { UnionType  $3           }
+            : ArrayType                 { $1 }
+            | FuncType                  { $1 }
             | Type '&'                  { PtrType    $1 (Nothing) }
             | Type '&' ArrayType        { PtrType    $1 (Just $3) }
+            | struct '{' Members '}'    { StructType $3           }
+            | union  '{' Members '}'    { UnionType  $3           }
 
 ArrayType   :: { Type }
             : TypeRef                   {            $1           }
@@ -116,6 +119,10 @@ ArrayType   :: { Type }
 TypeRef     :: { Type }
             : id                        { TypeRef $1 (Nothing) }
             | id '(' int ')'            { TypeRef $1 (Just $3) }
+
+FuncType    :: { Type }
+            : '(' Members ')'                      { FuncType $2 [] }
+            | '(' Members ')' '->' '(' Members ')' { FuncType $2 $6 }
 
 Members     :: { [Member] }
             : Member                    { [$1] }

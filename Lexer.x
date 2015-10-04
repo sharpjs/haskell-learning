@@ -110,6 +110,7 @@ $cond   = $op # \/
 <0> "<="                { yield $ const OpLte  }
 <0> ">="                { yield $ const OpGte  }
 <0> "=>"                { yield $ const OpIs   }
+<0> "->"                { yield $ const OpFunc }
 
 <0> \/ $cond+ \/        { condition }
 
@@ -126,6 +127,7 @@ data Token
     | OpShl  | OpShr  | OpAnd  | OpXor | OpOr
     | OpBChg | OpBClr | OpBSet | OpBTst
     | OpMove | OpCmp  | OpEq   | OpNeq | OpLt | OpGt | OpLte | OpGte | OpIs
+    | OpFunc
     | OpTag String
     | TCond String
     | At | Colon | Comma | Eos | Eof

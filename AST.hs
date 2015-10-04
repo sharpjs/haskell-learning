@@ -14,6 +14,7 @@ data Stmt
     | Bss       String Type
     | Data      String Type Exp
     | Alias     String Type Exp
+    | Func      String Type [Stmt]
     | Eval      Exp
     deriving (Eq, Show)
 
@@ -23,6 +24,7 @@ data Type
     | PtrType    Type   (Maybe Type)
     | StructType [Member]
     | UnionType  [Member]
+    | FuncType   [Member] [Member]
     deriving (Eq, Show)
 
 data Member
