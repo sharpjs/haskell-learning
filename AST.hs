@@ -34,6 +34,7 @@ data Exp
     = IdVal  String
     | IntVal Integer
     | StrVal String
+    | Deref  [Addr]
     | Acc    Exp String
     | Inc    String Exp
     | Dec    String Exp
@@ -62,6 +63,15 @@ data Exp
     | Lte    String Exp Exp
     | Gte    String Exp Exp
     | Is     String Exp String
+    deriving (Eq, Show)
+
+data Addr
+    = AsAddr  Exp
+    | PostInc Exp
+    | PostDec Exp
+    | PreInc  Exp
+    | PreDec  Exp
+    | Scaled  Exp Exp
     deriving (Eq, Show)
 
 data Signedness

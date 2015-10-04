@@ -159,8 +159,20 @@ AtomExp     :: { Exp }
             : id                        { IdVal  $1 }
             | int                       { IntVal $1 }
             | str                       { StrVal $1 }
-            | '(' AtomExp ')'           { $2 }
---          | '[' Ind ']'
+            | '[' Addrs ']'             { Deref  $2 }
+            | '(' Exp  ')'              {        $2 }
+
+Addrs       :: { [Addr] }
+            :           Addr            {       [$1] }
+            | Addrs '+' Addr            { $1 ++ [$3] }
+
+Addr        :: { Addr }
+            : AtomExp                   { AsAddr  $1    }
+            | AtomExp '++'              { PostInc $1    }
+            | AtomExp '--'              { PostDec $1    }
+            | '++' AtomExp              { PreInc  $2    }
+            | '--' AtomExp              { PreDec  $2    }
+            | AtomExp '*' AtomExp       { Scaled  $1 $3 }
 
 {
 parse :: String -> [Stmt]
