@@ -60,6 +60,8 @@ data Exp
     | BSet   String Exp Exp
     | BTst   String Exp Exp
     | Cmp    String Exp Exp
+    | Move   String Exp Exp
+    | Scc    String Exp Test
     deriving (Eq, Show)
 
 data Addr

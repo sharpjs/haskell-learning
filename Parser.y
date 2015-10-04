@@ -75,9 +75,9 @@ import AST
 
 -- Low
 %left       if while
-%nonassoc   '==' '!=' '<' '>' '<=' '>=' '=>'
-%nonassoc   '<>'
 %right      '='
+%nonassoc   '=>' '==' '!=' '<' '>' '<=' '>='
+%nonassoc   '<>'
 %nonassoc   '.~' '.!' '.=' '.?'
 %left       '|' '^'
 %left       '&'
@@ -112,15 +112,15 @@ Stmt        :: { Stmt }
             | Exp                       { Eval  $1 }
             | If                        {       $1 }
             | loop       Block          { Loop  $2 }
-            | while Test Block          { While $2 $3 }
-            | Stmt if    Test           { If    $3 $1 (Block []) }
-            | Stmt while Test           { While $3 $1 }
+            | while Cond Block          { While $2 $3 }
+            | Stmt if    Cond           { If    $3 $1 (Block []) }
+            | Stmt while Cond           { While $3 $1 }
 
 Block       :: { Stmt }
             : '{' Stmts '}'             { Block $2 }
 
 If          :: { Stmt }
-            : if Test Block Else        { If $2 $3 $4 }
+            : if Cond Block Else        { If $2 $3 $4 }
 
 Else        :: { Stmt }
             : {-empty-}                 { Block [] }
@@ -182,6 +182,8 @@ Exp         :: { Exp }
             | Exp '.=' Sel Exp          { BChg $3 $1 $4 }
             | Exp '.?' Sel Exp          { BChg $3 $1 $4 }
             | Exp '<>' Sel Exp          { Cmp  $3 $1 $4 }
+            | Exp '='  Sel Exp          { Move $3 $1 $4 }
+            | Exp '='  Sel Test         { Scc  $3 $1 $4 }
 
 Sel         :: { String }
             : {- empty -}               { "" }
@@ -208,9 +210,15 @@ Addr        :: { Addr }
 
 -- Conditions
 
-Test        :: { Test }
+Cond        :: { Test }
+            -- A boolean condition, which can be an explicit test or an
+            -- expression implicitly tested for nonzero.
             : Exp                       { Test "!0" (Just $1) }
-            | '/*/'                     { Test  $1  (Nothing) }
+            | Test                      { $1 }
+
+Test        :: { Test }
+            -- An explicit test for a boolean condition.
+            : '/*/'                     { Test  $1  (Nothing) }
             | Exp '=>' Sel '/*/'        { Test  $4  (Just $1) }
             | Exp '==' Sel Exp          { Test "==" (Just $ Cmp $3 $1 $4) }
             | Exp '!=' Sel Exp          { Test "!=" (Just $ Cmp $3 $1 $4) }
