@@ -84,81 +84,51 @@ $cond   = $op # \/
 <0> \:                  { yield $ const Colon  }
 <0> \,                  { yield $ const Comma  }
 
-<0> "!"                 { yield $ OpClr  . drop 1 }
-<0> "~"                 { yield $ OpNot  . drop 1 }
-<0> "*"                 { yield $ OpMul  . drop 1 }
-<0> "/"                 { yield $ OpDiv  . drop 1 }
-<0> "%"                 { yield $ OpMod  . drop 1 }
-<0> "+"                 { yield $ OpAdd  . drop 1 }
-<0> "-"                 { yield $ OpSub  . drop 1 }
-<0> "<<"                { yield $ OpShl  . drop 2 }
-<0> ">>"                { yield $ OpShr  . drop 2 }
-<0> "&"                 { yield $ OpAnd  . drop 1 }
-<0> "^"                 { yield $ OpXor  . drop 1 }
-<0> "|"                 { yield $ OpOr   . drop 1 }
-<0> ".~"                { yield $ OpBChg . drop 2 }
-<0> ".!"                { yield $ OpBClr . drop 2 }
-<0> ".="                { yield $ OpBSet . drop 2 }
-<0> ".?"                { yield $ OpBTst . drop 2 }
-<0> "<>"                { yield $ OpCmp  . drop 2 }
-<0> "=="                { yield $ OpEq   . drop 2 }
-<0> "!="                { yield $ OpNeq  . drop 2 }
-<0> "<"                 { yield $ OpLt   . drop 1 }
-<0> ">"                 { yield $ OpGt   . drop 1 }
-<0> "<="                { yield $ OpLte  . drop 2 }
-<0> ">="                { yield $ OpGte  . drop 2 }
-<0> "=>"                { yield $ const OpIs }
+<0> "++"                { yield $ const OpInc  }
+<0> "--"                { yield $ const OpDec  }
+<0> "!"                 { yield $ const OpClr  }
+<0> "~"                 { yield $ const OpNot  }
+<0> "*"                 { yield $ const OpMul  }
+<0> "/"                 { yield $ const OpDiv  }
+<0> "%"                 { yield $ const OpMod  }
+<0> "+"                 { yield $ const OpAdd  }
+<0> "-"                 { yield $ const OpSub  }
+<0> "<<"                { yield $ const OpShl  }
+<0> ">>"                { yield $ const OpShr  }
+<0> "&"                 { yield $ const OpAnd  }
+<0> "^"                 { yield $ const OpXor  }
+<0> "|"                 { yield $ const OpOr   }
+<0> ".~"                { yield $ const OpBChg }
+<0> ".!"                { yield $ const OpBClr }
+<0> ".="                { yield $ const OpBSet }
+<0> ".?"                { yield $ const OpBTst }
+<0> "<>"                { yield $ const OpCmp  }
+<0> "=="                { yield $ const OpEq   }
+<0> "!="                { yield $ const OpNeq  }
+<0> "<"                 { yield $ const OpLt   }
+<0> ">"                 { yield $ const OpGt   }
+<0> "<="                { yield $ const OpLte  }
+<0> ">="                { yield $ const OpGte  }
+<0> "=>"                { yield $ const OpIs   }
 
-<0> \/ $cond+ \/        { \m -> return . TCond . take (len m - 2) . drop 1 . text $ m }
+<0> \/ $cond+ \/        { condition }
 
 -- Begin Wrapper Code
 {
 data Token
-    = KwType
-    | KwStruct
-    | KwUnion
-    | Id        String
-    | LitInt    Integer
-    | LitStr    String
-    | BlockL
-    | BlockR
-    | ParenL
-    | ParenR
-    | BrackL
-    | BrackR
-    | OpMem
-    | OpClr     String
-    | OpNot     String
-    | OpMul     String
-    | OpDiv     String
-    | OpMod     String
-    | OpAdd     String
-    | OpSub     String
-    | OpShl     String
-    | OpShr     String
-    | OpAnd     String
-    | OpXor     String
-    | OpOr      String
-    | OpBChg    String
-    | OpBClr    String
-    | OpBSet    String
-    | OpBTst    String
-    | OpMove
-    | OpCmp     String
-    | OpEq      String
-    | OpNeq     String
-    | OpLt      String
-    | OpGt      String
-    | OpLte     String
-    | OpGte     String
-    | OpIs
-    | OpTag     String
-    | TCond     String
-    | At
-    | Colon
-    | Comma
-    | Eos
-    | Eof
+    = KwType | KwStruct | KwUnion
+    | Id String | LitInt Integer | LitStr String
+    | BlockL | BlockR
+    | ParenL | ParenR
+    | BrackL | BrackR
+    | OpMem  | OpInc  | OpDec  | OpClr | OpNot
+    | OpMul  | OpDiv  | OpMod  | OpAdd | OpSub
+    | OpShl  | OpShr  | OpAnd  | OpXor | OpOr
+    | OpBChg | OpBClr | OpBSet | OpBTst
+    | OpMove | OpCmp  | OpEq   | OpNeq | OpLt | OpGt | OpLte | OpGte | OpIs
+    | OpTag String
+    | TCond String
+    | At | Colon | Comma | Eos | Eof
     deriving (Eq, Show)
 
 -- -----------------------------------------------------------------------------
@@ -367,6 +337,10 @@ leaveString _ = do
     setStr . B.fromString $ ""
     setStartCode 0
     return . LitStr . TL.unpack . B.toLazyText $ b
+
+condition :: LexAction Token
+condition m =
+    return . TCond . take (len m - 2) . drop 1 . text $ m
 
 -- End Wrapper Code
 }

@@ -35,6 +35,8 @@ data Exp
     | IntVal Integer
     | StrVal String
     | Acc    Exp String
+    | Inc    String Exp
+    | Dec    String Exp
     | Clr    String Exp
     | Neg    String Exp
     | Not    String Exp

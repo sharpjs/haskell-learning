@@ -38,29 +38,31 @@ import AST
     ','     { Comma     }
     ';'     { Eos       }
     '.'     { OpMem     }
-    '!'     { OpClr  $$ }
-    '~'     { OpNot  $$ }
-    '*'     { OpMul  $$ }
-    '/'     { OpDiv  $$ }
-    '%'     { OpMod  $$ }
-    '+'     { OpAdd  $$ }
-    '-'     { OpSub  $$ }
-    '<<'    { OpShl  $$ }
-    '>>'    { OpShr  $$ }
-    '&'     { OpAnd  $$ }
-    '^'     { OpXor  $$ }
-    '|'     { OpOr   $$ }
-    '.~'    { OpBChg $$ }
-    '.!'    { OpBClr $$ }
-    '.='    { OpBSet $$ }
-    '.?'    { OpBTst $$ }
-    '<>'    { OpCmp  $$ }
-    '=='    { OpEq   $$ }
-    '!='    { OpNeq  $$ }
-    '<'     { OpLt   $$ }
-    '>'     { OpGt   $$ }
-    '<='    { OpLte  $$ }
-    '>='    { OpGte  $$ }
+    '++'    { OpInc     }
+    '--'    { OpDec     }
+    '!'     { OpClr     }
+    '~'     { OpNot     }
+    '*'     { OpMul     }
+    '/'     { OpDiv     }
+    '%'     { OpMod     }
+    '+'     { OpAdd     }
+    '-'     { OpSub     }
+    '<<'    { OpShl     }
+    '>>'    { OpShr     }
+    '&'     { OpAnd     }
+    '^'     { OpXor     }
+    '|'     { OpOr      }
+    '.~'    { OpBChg    }
+    '.!'    { OpBClr    }
+    '.='    { OpBSet    }
+    '.?'    { OpBTst    }
+    '<>'    { OpCmp     }
+    '=='    { OpEq      }
+    '!='    { OpNeq     }
+    '<'     { OpLt      }
+    '>'     { OpGt      }
+    '<='    { OpLte     }
+    '>='    { OpGte     }
     '=>'    { OpIs      }
 
 -- Low
@@ -74,8 +76,8 @@ import AST
 %left       '+' '-'
 %left       '*' '/' '%'
 %nonassoc   '@'
-%right      UNARY '~' '!'
-%left       '.'
+%right      UnaryR '~' '!'
+%left       UnaryL '.' '++' '--'
 -- High
 
 %%
@@ -120,9 +122,11 @@ Member      :: { Member }
 Exp         :: { Exp }
             : AtomExp                   { $1 }
             | Exp '.' id                { Acc  $1    $3 }
-            | '!' Sel Exp %prec UNARY   { Clr  $2    $3 }
-            | '-' Sel Exp %prec UNARY   { Neg  $2    $3 }
-            | '~' Sel Exp %prec UNARY   { Not  $2    $3 }
+            | Exp '--' Sel              { Inc  $3    $1 }
+            | Exp '++' Sel              { Dec  $3    $1 }
+            | '!' Sel Exp %prec UnaryR  { Clr  $2    $3 }
+            | '-' Sel Exp %prec UnaryR  { Neg  $2    $3 }
+            | '~' Sel Exp %prec UnaryR  { Not  $2    $3 }
             | Exp '*'  Sel Exp          { Mul  $3 $1 $4 }
             | Exp '/'  Sel Exp          { Div  $3 $1 $4 }
             | Exp '%'  Sel Exp          { Mod  $3 $1 $4 }
