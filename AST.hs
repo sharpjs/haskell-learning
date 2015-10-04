@@ -15,7 +15,9 @@ data Stmt
     | Data      String Type Exp
     | Alias     String Type Exp
     | Func      String Type [Stmt]
+    | Loop      [Stmt]
     | Eval      Exp
+    | If        Test [Stmt] [Stmt]
     deriving (Eq, Show)
 
 data Type
@@ -57,13 +59,6 @@ data Exp
     | BSet   String Exp Exp
     | BTst   String Exp Exp
     | Cmp    String Exp Exp
-    | Eq     String Exp Exp
-    | Neq    String Exp Exp
-    | Lt     String Exp Exp
-    | Gt     String Exp Exp
-    | Lte    String Exp Exp
-    | Gte    String Exp Exp
-    | Is     String Exp String
     deriving (Eq, Show)
 
 data Addr
@@ -73,6 +68,10 @@ data Addr
     | PreInc  Exp
     | PreDec  Exp
     | Scaled  Exp Exp
+    deriving (Eq, Show)
+
+data Test
+    = Test String (Maybe Exp)
     deriving (Eq, Show)
 
 data Signedness

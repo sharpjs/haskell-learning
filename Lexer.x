@@ -45,6 +45,13 @@ $cond   = $op # \/
 <0> struct              { yield $ const KwStruct }
 <0> union               { yield $ const KwUnion  }
 
+<0> loop                { yield $ const KwLoop   }
+<0> if                  { yield $ const KwIf     }
+<0> else                { yield $ const KwElse   }
+<0> while               { yield $ const KwWhile  }
+<0> return              { yield $ const KwReturn }
+<0> jump                { yield $ const KwJump   }
+
 <0> $id0 $id*           { yield $ Id }
 
 <0>      $dec [$dec _]* { yield $ LitInt . fromBase 10          }
@@ -118,6 +125,7 @@ $cond   = $op # \/
 {
 data Token
     = KwType | KwStruct | KwUnion
+    | KwBlock | KwLoop  | KwIf    | KwElse  | KwWhile | KwReturn | KwJump  
     | Id String | LitInt Integer | LitStr String
     | BlockL | BlockR
     | ParenL | ParenR

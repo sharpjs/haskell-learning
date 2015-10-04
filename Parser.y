@@ -22,10 +22,17 @@ import AST
     id      { Id     $$ }
     int     { LitInt $$ }
     str     { LitStr $$ }
-    cond    { TCond  $$ }
+    '/*/'   { TCond  $$ }
     type    { KwType    }
     struct  { KwStruct  }
     union   { KwUnion   }
+    block   { KwBlock   }
+    loop    { KwLoop    }
+    if      { KwIf      }
+    else    { KwElse    }
+    while   { KwWhile   }
+    return  { KwReturn  }
+    jump    { KwJump    }
     '{'     { BlockL    }
     '}'     { BlockR    }
     '('     { ParenL    }
@@ -92,14 +99,27 @@ StmtOpt     :: { [Stmt] }
             | Stmt                      { [$1] }
 
 Stmt        :: { Stmt }
-            : '{' Stmts '}'                 { Block   $2       }
-            | type id '=' Type              { TypeDef $2 $4    }
-            | id ':'                        { Label   $1       }
-            | id ':' Type                   { Bss     $1 $3    }
-            | id ':' Type '=' Exp           { Data    $1 $3 $5 } 
-            | id ':' Type '@' Primary       { Alias   $1 $3 $5 }
-            | id ':' FuncType '{' Stmts '}' { Func    $1 $3 $5 }
-            | Exp                           { Eval    $1       }
+            : Block                     { Block   $1       }
+            | type id '=' Type          { TypeDef $2 $4    }
+            | id ':'                    { Label   $1       }
+            | id ':' Type               { Bss     $1 $3    }
+            | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
+            | id ':' Type '@' Primary   { Alias   $1 $3 $5 }
+            | id ':' FuncType Block     { Func    $1 $3 $4 }
+            | loop Block                { Loop    $2 }
+            | If                        { $1 }
+            | Exp                       { Eval    $1 }
+
+Block       :: { [Stmt] }
+            : '{' Stmts '}'             { $2 }
+
+If          :: { Stmt }
+            : if Test Block Else        { If $2 $3 $4 }
+
+Else        :: { [Stmt] }
+            : {-empty-}                 { [  ] }
+            | else Block                {  $2  }
+            | else If                   { [$2] }
 
 -- Types
 
@@ -156,18 +176,10 @@ Exp         :: { Exp }
             | Exp '.=' Sel Exp          { BChg $3 $1 $4 }
             | Exp '.?' Sel Exp          { BChg $3 $1 $4 }
             | Exp '<>' Sel Exp          { Cmp  $3 $1 $4 }
-            | Exp '==' Sel Exp          { Eq   $3 $1 $4 }
-            | Exp '!=' Sel Exp          { Neq  $3 $1 $4 }
-            | Exp '<'  Sel Exp          { Lt   $3 $1 $4 }
-            | Exp '>'  Sel Exp          { Gt   $3 $1 $4 }
-            | Exp '<=' Sel Exp          { Lte  $3 $1 $4 }
-            | Exp '>=' Sel Exp          { Gte  $3 $1 $4 }
-            | Exp '=>' Sel cond         { Is   $3 $1 $4 }
 
 Sel         :: { String }
             : {- empty -}               { "" }
-            | '{'    '}'                { "" }
-            | '{' id '}'                { $2 }
+            | ':' id                    { $2 }
 
 Primary     :: { Exp }
             : id                        { IdVal  $1 }
@@ -187,6 +199,19 @@ Addr        :: { Addr }
             | '++' Primary              { PreInc  $2    }
             | '--' Primary              { PreDec  $2    }
             | Primary '*' Primary       { Scaled  $1 $3 }
+
+-- Conditions
+
+Test        :: { Test }
+            : Exp                       { Test "!0" (Just $1) }
+            | '/*/'                     { Test  $1  (Nothing) }
+            | Exp '=>' Sel '/*/'        { Test  $4  (Just $1) }
+            | Exp '==' Sel Exp          { Test "==" (Just $ Cmp $3 $1 $4) }
+            | Exp '!=' Sel Exp          { Test "!=" (Just $ Cmp $3 $1 $4) }
+            | Exp '<'  Sel Exp          { Test "<"  (Just $ Cmp $3 $1 $4) }
+            | Exp '>'  Sel Exp          { Test ">"  (Just $ Cmp $3 $1 $4) }
+            | Exp '<=' Sel Exp          { Test "<=" (Just $ Cmp $3 $1 $4) }
+            | Exp '>=' Sel Exp          { Test ">=" (Just $ Cmp $3 $1 $4) }
 
 {
 parse :: String -> [Stmt]

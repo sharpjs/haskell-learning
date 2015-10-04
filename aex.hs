@@ -16,6 +16,6 @@ main = print . parse . unlines $
     [ "type word = struct { x: i16(32), y: u8 & u32[100] }"
     , "a_str: char[] = \"abc\""
     , "a_label:"
-    , "z +{x} 4 * n <> 2 => /==/"
+    , "if z +:x 4 * n == 2 { y << 4 }"
     ]
 
