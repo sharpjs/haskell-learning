@@ -10,6 +10,7 @@ module Main where
 import Prelude hiding (lex)
 import Lexer
 import Parser
+import Asm
 
 main :: IO ()
 main = print . parse . unlines $
