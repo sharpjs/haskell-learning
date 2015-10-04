@@ -99,18 +99,23 @@ Stmt        :: { Stmt }
             | id ':' Type '@' Primary   { Alias   $1 $3 $5 }
             | Exp                       { Eval    $1       }
 
-Type        :: { Type }
-            : Type0                     {            $1           }
-            | Type '&'                  { PtrType    $1 (Nothing) }
-            | Type '&' Type0            { PtrType    $1 (Just $3) }
+-- Types
 
-Type0       :: { Type }
-            : id                        { TypeRef    $1           }
-            | Type0 '['     ']'         { ArrayType  $1 (Nothing) }
-            | Type0 '[' int ']'         { ArrayType  $1 (Just $3) }
-            | Type0 '(' int ')'         { TypeWidth  $1 $3        }
+Type        :: { Type }
+            : ArrayType                 {            $1           }
             | struct '{' Members '}'    { StructType $3           }
             | union  '{' Members '}'    { UnionType  $3           }
+            | Type '&'                  { PtrType    $1 (Nothing) }
+            | Type '&' ArrayType        { PtrType    $1 (Just $3) }
+
+ArrayType   :: { Type }
+            : TypeRef                   {            $1           }
+            | ArrayType '['     ']'     { ArrayType  $1 (Nothing) }
+            | ArrayType '[' int ']'     { ArrayType  $1 (Just $3) }
+
+TypeRef     :: { Type }
+            : id                        { TypeRef $1 (Nothing) }
+            | id '(' int ')'            { TypeRef $1 (Just $3) }
 
 Members     :: { [Member] }
             : Member                    { [$1] }
@@ -118,6 +123,8 @@ Members     :: { [Member] }
 
 Member      :: { Member }
             : id ':' Type               { Member $1 $3 }
+
+-- Expressions
 
 Exp         :: { Exp }
             : Primary                   { $1 }

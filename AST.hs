@@ -18,10 +18,9 @@ data Stmt
     deriving (Eq, Show)
 
 data Type
-    = TypeRef    String
-    | TypeWidth  Type Integer
-    | PtrType    Type (Maybe Type)
-    | ArrayType  Type (Maybe Integer)
+    = TypeRef    String (Maybe Integer)
+    | ArrayType  Type   (Maybe Integer)
+    | PtrType    Type   (Maybe Type)
     | StructType [Member]
     | UnionType  [Member]
     deriving (Eq, Show)
