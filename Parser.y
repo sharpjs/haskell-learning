@@ -96,7 +96,7 @@ Stmt        :: { Stmt }
             | id ':'                    { Label   $1       }
             | id ':' Type               { Bss     $1 $3    }
             | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
-            | id ':' Type '@' AtomExp   { Alias   $1 $3 $5 }
+            | id ':' Type '@' Primary   { Alias   $1 $3 $5 }
             | Exp                       { Eval    $1       }
 
 Type        :: { Type }
@@ -120,7 +120,7 @@ Member      :: { Member }
             : id ':' Type               { Member $1 $3 }
 
 Exp         :: { Exp }
-            : AtomExp                   { $1 }
+            : Primary                   { $1 }
             | Exp '.' id                { Acc  $1    $3 }
             | Exp '--' Sel              { Inc  $3    $1 }
             | Exp '++' Sel              { Dec  $3    $1 }
@@ -155,7 +155,7 @@ Sel         :: { String }
             | '{'    '}'                { "" }
             | '{' id '}'                { $2 }
 
-AtomExp     :: { Exp }
+Primary     :: { Exp }
             : id                        { IdVal  $1 }
             | int                       { IntVal $1 }
             | str                       { StrVal $1 }
@@ -167,12 +167,12 @@ Addrs       :: { [Addr] }
             | Addrs '+' Addr            { $1 ++ [$3] }
 
 Addr        :: { Addr }
-            : AtomExp                   { AsAddr  $1    }
-            | AtomExp '++'              { PostInc $1    }
-            | AtomExp '--'              { PostDec $1    }
-            | '++' AtomExp              { PreInc  $2    }
-            | '--' AtomExp              { PreDec  $2    }
-            | AtomExp '*' AtomExp       { Scaled  $1 $3 }
+            : Primary                   { AsAddr  $1    }
+            | Primary '++'              { PostInc $1    }
+            | Primary '--'              { PostDec $1    }
+            | '++' Primary              { PreInc  $2    }
+            | '--' Primary              { PreDec  $2    }
+            | Primary '*' Primary       { Scaled  $1 $3 }
 
 {
 parse :: String -> [Stmt]
