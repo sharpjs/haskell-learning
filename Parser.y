@@ -74,6 +74,7 @@ import AST
     '->'    { OpFunc    }
 
 -- Low
+%left       if while
 %nonassoc   '==' '!=' '<' '>' '<=' '>=' '=>'
 %nonassoc   '<>'
 %right      '='
@@ -106,9 +107,12 @@ Stmt        :: { Stmt }
             | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
             | id ':' Type '@' Primary   { Alias   $1 $3 $5 }
             | id ':' FuncType Block     { Func    $1 $3 $4 }
-            | loop Block                { Loop    $2 }
-            | If                        { $1 }
             | Exp                       { Eval    $1 }
+            | If                        { $1 }
+            | loop Block                { Loop    $2 }
+            | while Test Block          { While   $2 $3 }
+            | Stmt if Test              { If      $3 [$1] [] }
+            | Stmt while Test           { While   $3 [$1]    }
 
 Block       :: { [Stmt] }
             : '{' Stmts '}'             { $2 }

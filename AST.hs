@@ -15,9 +15,10 @@ data Stmt
     | Data      String Type Exp
     | Alias     String Type Exp
     | Func      String Type [Stmt]
-    | Loop      [Stmt]
     | Eval      Exp
+    | Loop      [Stmt]
     | If        Test [Stmt] [Stmt]
+    | While     Test [Stmt]
     deriving (Eq, Show)
 
 data Type
