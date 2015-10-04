@@ -14,11 +14,11 @@ data Stmt
     | Bss       String Type
     | Data      String Type Exp
     | Alias     String Type Exp
-    | Func      String Type [Stmt]
+    | Func      String Type Stmt
     | Eval      Exp
-    | Loop      [Stmt]
-    | If        Test [Stmt] [Stmt]
-    | While     Test [Stmt]
+    | Loop      Stmt
+    | If        Test Stmt Stmt
+    | While     Test Stmt
     deriving (Eq, Show)
 
 data Type

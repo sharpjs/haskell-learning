@@ -92,7 +92,7 @@ import AST
 %%
 
 Stmts       :: { [Stmt] }
-            : StmtOpt                   { $1       }
+            : StmtOpt                   { $1 }
             | Stmts ';' StmtOpt         { $1 ++ $3 }
 
 StmtOpt     :: { [Stmt] }
@@ -100,30 +100,32 @@ StmtOpt     :: { [Stmt] }
             | Stmt                      { [$1] }
 
 Stmt        :: { Stmt }
-            : Block                     { Block   $1       }
-            | type id '=' Type          { TypeDef $2 $4    }
-            | id ':'                    { Label   $1       }
-            | id ':' Type               { Bss     $1 $3    }
+            : Block                     { $1 }
+            -- Declaration
+            | type id '=' Type          { TypeDef $2 $4 }
+            | id ':'                    { Label   $1 }
+            | id ':' Type               { Bss     $1 $3 }
             | id ':' Type '=' Exp       { Data    $1 $3 $5 } 
             | id ':' Type '@' Primary   { Alias   $1 $3 $5 }
             | id ':' FuncType Block     { Func    $1 $3 $4 }
-            | Exp                       { Eval    $1 }
-            | If                        { $1 }
-            | loop Block                { Loop    $2 }
-            | while Test Block          { While   $2 $3 }
-            | Stmt if Test              { If      $3 [$1] [] }
-            | Stmt while Test           { While   $3 [$1]    }
+            -- Action
+            | Exp                       { Eval  $1 }
+            | If                        {       $1 }
+            | loop       Block          { Loop  $2 }
+            | while Test Block          { While $2 $3 }
+            | Stmt if    Test           { If    $3 $1 (Block []) }
+            | Stmt while Test           { While $3 $1 }
 
-Block       :: { [Stmt] }
-            : '{' Stmts '}'             { $2 }
+Block       :: { Stmt }
+            : '{' Stmts '}'             { Block $2 }
 
 If          :: { Stmt }
             : if Test Block Else        { If $2 $3 $4 }
 
-Else        :: { [Stmt] }
-            : {-empty-}                 { [  ] }
-            | else Block                {  $2  }
-            | else If                   { [$2] }
+Else        :: { Stmt }
+            : {-empty-}                 { Block [] }
+            | else Block                { $2 }
+            | else If                   { $2 }
 
 -- Types
 

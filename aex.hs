@@ -17,5 +17,8 @@ main = print . parse . unlines $
     , "a_str: char[] = \"abc\""
     , "a_label:"
     , "if z +:x 4 * n == 2 { y << 4 }"
+    , "if /!=/ {} if /==/"
+    , "{} while /==/"
+    , "while /!=/ {} while /==/"
     ]
 
