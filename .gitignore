@@ -9,4 +9,8 @@
 # Temporary
 *.bak
 *.swp
+*.tmp
+
+# Cabal
+.cabal*
 
