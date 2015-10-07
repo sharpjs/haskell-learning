@@ -5,7 +5,7 @@
     Copyright (C) 2015 Jeffrey Sharp
 -}
 
-module Interner (new, intern) where
+module Interner (Interner, new, intern) where
 
 import Control.Monad.ST
 import Data.Hashable (Hashable)
