@@ -9,6 +9,7 @@ module Main where
 
 import Prelude hiding (lex)
 
+import Analyzer
 import Asm
 import Interner
 import Lexer
