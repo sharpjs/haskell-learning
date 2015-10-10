@@ -17,18 +17,17 @@ import qualified Data.ByteString          as B
 import qualified Data.HashTable.Class     as H
 import qualified Data.HashTable.ST.Cuckoo as HC
 
-type HashTable s k v = HC.HashTable s k v
-
-type SymbolTable s v = HashTable s B.ByteString v
+type Name      = B.ByteString
+type Table s v = HC.HashTable s Name v
 
 data Symbol = Symbol
-    { symName :: !B.ByteString
+    { symName :: !Name
     , symType :: !Type
     }
 
 data Scope s = Scope
-    { types   :: HashTable s B.ByteString Type
-    , symbols :: HashTable s B.ByteString Symbol
+    { types   :: Table s Type
+    , symbols :: Table s Symbol
     }
 
 rootScope :: ST s [Scope s]
@@ -55,40 +54,37 @@ analyze' s = do
     types <- asks $ types . head
     lift $ H.insert types B.empty (TypeRef "" Nothing)
 
-resolveType :: B.ByteString -> Analyzer s Type
-resolveType name = do
-    scopes <- ask
-    found  <- lift $ findMapM scopes $ \s -> H.lookup (types s) name
-    case found of
-        Nothing -> fail "type not defined" 
-        Just t  -> return t
-
-defineType :: B.ByteString -> Type -> Analyzer s ()
+defineType :: Name -> Type -> Analyzer s ()
 defineType name t = do
-    types <- asks $ types . current
-    found <- lift $ H.lookup types name
-    case found of
-        Nothing -> lift $ H.insert types name t
-        Just t' -> fail "type already defined"
+    define types name t
 
-resolveSym :: B.ByteString -> Analyzer s Symbol
-resolveSym name = do
-    scopes <- ask
-    found  <- lift $ findMapM scopes $ \s -> H.lookup (symbols s) name
-    case found of
-        Nothing -> fail "symbol not defined" 
-        Just s  -> return s
+resolveType :: Name -> Analyzer s Type
+resolveType name = do
+    resolve types name
 
-defineSym :: B.ByteString -> Symbol -> Analyzer s ()
+defineSym :: Name -> Symbol -> Analyzer s ()
 defineSym name s = do
-    symbols <- asks $ symbols . current
-    found   <- lift $ H.lookup symbols name
-    case found of
-        Nothing -> lift $ H.insert symbols name s
-        Just s' -> fail "symbol already defined"
+    define symbols name s
 
-current :: [a] -> a
-current = head
+resolveSym :: Name -> Analyzer s Symbol
+resolveSym name = do
+    resolve symbols name
+
+define :: (Scope s -> Table s v) -> Name -> v -> Analyzer s ()
+define get name val = do
+    table <- asks $ get . head
+    found <- lift $ H.lookup table name
+    case found of
+        Nothing -> lift $ H.insert table name val
+        Just v' -> fail "already defined"
+
+resolve :: (Scope s -> Table s v) -> Name -> Analyzer s v
+resolve get name = do
+    tables <- asks $ fmap get
+    found  <- lift $ findMapM tables $ \t -> H.lookup t name
+    case found of
+        Nothing -> fail "not found" 
+        Just v  -> return v
 
 -- | Maps an applicative function over a traversable,
 -- | returning the first non-Maybe value.
