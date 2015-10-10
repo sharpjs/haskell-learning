@@ -87,7 +87,11 @@ resolve get name = do
         Just v  -> return v
 
 -- | Maps an applicative function over a traversable,
--- | returning the first non-Maybe value.
-findMapM :: (Traversable t, Applicative m) => t a -> (a -> m (Maybe b)) -> m (Maybe b)
+-- |   returning the first non-Nothing value.
+findMapM :: (Traversable t, Applicative f)
+         => t a                 -- traversable
+         -> (a -> f (Maybe b))  -- predicate returning applicative result or Nothing
+         -> f (Maybe b)         -- applicative result
+
 findMapM t f = getFirst . foldMap First <$> traverse f t
 
