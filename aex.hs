@@ -15,6 +15,8 @@ import Interner
 import Lexer
 import Parser
 
+import qualified Mcf5307 as CF
+
 main :: IO ()
 main = print . parse . unlines $
     [ "type word = struct { x: i16(32), y: u8 & u32[100] }"
