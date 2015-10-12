@@ -22,6 +22,12 @@ import Asm
 newtype DataReg = D Word deriving (Eq, Show)
 newtype AddrReg = A Word deriving (Eq, Show)
 
+dregs @ [ d0,  d1,  d2,  d3,  d4,  d5,  d6,  d7]
+      = [D 0, D 1, D 2, D 3, D 4, D 5, D 6, D 7]
+
+aregs @ [ a0,  a1,  a2,  a3,  a4,  a5,  a6,  a7]
+      = [A 0, A 1, A 2, A 3, A 4, A 5, A 6, A 7]
+
 data CtrlReg
     = VBR | CACR | ACR0 | ACR1 | MBAR | RAMBAR
     deriving (Eq, Show)
@@ -60,12 +66,6 @@ data Operand
     | PcDisp                Const
     | PcDispIdx             Const Index
     deriving (Eq, Show)
-
-dregs @ [ d0,  d1,  d2,  d3,  d4,  d5,  d6,  d7]
-      = [D 0, D 1, D 2, D 3, D 4, D 5, D 6, D 7]
-
-aregs @ [ a0,  a1,  a2,  a3,  a4,  a5,  a6,  a7]
-      = [A 0, A 1, A 2, A 3, A 4, A 5, A 6, A 7]
 
 newtype OperandSet = OS Word deriving (Eq, Show)
 
