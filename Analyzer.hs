@@ -86,7 +86,7 @@ resolve get name = do
         Nothing -> fail "not found" 
         Just v  -> return v
 
--- | Maps an applicative function over a traversable,
+-- | Maps an applicative-returning function over a traversable,
 -- |   returning the first non-Nothing value.
 findMapM :: (Traversable t, Applicative f)
          => t a                 -- traversable
