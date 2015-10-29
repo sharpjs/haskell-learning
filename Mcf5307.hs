@@ -67,10 +67,12 @@ data Operand
     | PcDispIdx             Const Index
     deriving (Eq, Show)
 
-newtype OperandSet = OS Word deriving (Eq, Show)
+newtype OperandSet
+    = OS Word
+    deriving (Eq, Show)
 
 instance Monoid OperandSet where
-    mempty                = none
+    mempty                = _none
     mappend (OS a) (OS b) = OS $ a .|. b
 
 member :: Operand -> OperandSet -> Bool
@@ -88,64 +90,107 @@ infix 4 <>?
 infix 5 \\
 (\\) = except
 
-none            = OS $ 0
-anyImm          = OS $ bit  0
-anyAbs16        = OS $ bit  1
-anyAbs32        = OS $ bit  2
-anyData         = OS $ bit  3
-anyAddr         = OS $ bit  4
-anyCtrl         = OS $ bit  5
-miscPc          = OS $ bit  6
-miscSr          = OS $ bit  7
-miscCcr         = OS $ bit  8
-miscBc          = OS $ bit  9
-anyRegs         = OS $ bit 10
-anyAddrInd      = OS $ bit 11
-anyAddrIndInc   = OS $ bit 12
-anyAddrIndDec   = OS $ bit 13
-anyAddrDisp     = OS $ bit 14
-anyAddrDispIdx  = OS $ bit 15
-anyPcDisp       = OS $ bit 16
-anyPcDispIdx    = OS $ bit 17
+_none         = OS $ 0
+_imm          = OS $ bit  0
+_abs16        = OS $ bit  1
+_abs32        = OS $ bit  2
+_data         = OS $ bit  3
+_addr         = OS $ bit  4
+_ctrl         = OS $ bit  5
+_pc           = OS $ bit  6
+_sr           = OS $ bit  7
+_ccr          = OS $ bit  8
+_bc           = OS $ bit  9
+_regs         = OS $ bit 10
+_addrInd      = OS $ bit 11
+_addrIndInc   = OS $ bit 12
+_addrIndDec   = OS $ bit 13
+_addrDisp     = OS $ bit 14
+_addrDispIdx  = OS $ bit 15
+_pcDisp       = OS $ bit 16
+_pcDispIdx    = OS $ bit 17
 
 toSet :: Operand -> OperandSet
-toSet (Imm         _    ) = anyImm
-toSet (Abs16       _    ) = anyAbs16
-toSet (Abs32       _    ) = anyAbs32
-toSet (Data        _    ) = anyData
-toSet (Addr        _    ) = anyAddr
-toSet (Ctrl        _    ) = anyCtrl
-toSet (Misc PC          ) = miscPc
-toSet (Misc SR          ) = miscSr
-toSet (Misc CCR         ) = miscCcr
-toSet (Misc BC          ) = miscBc
-toSet (Regs        _ _  ) = anyRegs
-toSet (AddrInd     _    ) = anyAddrInd
-toSet (AddrIndInc  _    ) = anyAddrIndInc
-toSet (AddrIndDec  _    ) = anyAddrIndDec
-toSet (AddrDisp    _ _  ) = anyAddrDisp
-toSet (AddrDispIdx _ _ _) = anyAddrDispIdx
-toSet (PcDisp        _  ) = anyPcDisp
-toSet (PcDispIdx     _ _) = anyPcDispIdx
+toSet (Imm         _    ) = _imm
+toSet (Abs16       _    ) = _abs16
+toSet (Abs32       _    ) = _abs32
+toSet (Data        _    ) = _data
+toSet (Addr        _    ) = _addr
+toSet (Ctrl        _    ) = _ctrl
+toSet (Misc PC          ) = _pc
+toSet (Misc SR          ) = _sr
+toSet (Misc CCR         ) = _ccr
+toSet (Misc BC          ) = _bc
+toSet (Regs        _ _  ) = _regs
+toSet (AddrInd     _    ) = _addrInd
+toSet (AddrIndInc  _    ) = _addrIndInc
+toSet (AddrIndDec  _    ) = _addrIndDec
+toSet (AddrDisp    _ _  ) = _addrDisp
+toSet (AddrDispIdx _ _ _) = _addrDispIdx
+toSet (PcDisp        _  ) = _pcDisp
+toSet (PcDispIdx     _ _) = _pcDispIdx
 
-anyAbs      =  anyAbs16 <> anyAbs32
-anyNormReg  =  anyData  <> anyAddr
-anyDstInd   =  anyAddrInd
-            <> anyAddrIndInc
-            <> anyAddrIndDec
-            <> anyAddrDisp
-            <> anyAddrDispIdx
-            <> anyPcDisp
-            <> anyPcDispIdx
+_abs        =  _abs16 <> _abs32
+_reg        =  _data  <> _addr
+_dstInd     =  _addrInd <> _addrIndInc <> _addrIndDec <> _addrDisp <> _addrDispIdx
+_srcInd     =  _dstInd <> _pcDisp <> _pcDispIdx
+_dst        =  _reg <> _dstInd <> _abs
+_src        =  _reg <> _srcInd <> _abs <> _imm
 
-normalDst = anyAbs <> anyNormReg <> anyDstInd
+type Ins0 = Asm Operand
+type Ins1 = Operand -> Asm Operand
+type Ins2 = Operand -> Operand -> Asm Operand
+type Ins3 = Operand -> Operand -> Operand -> Asm Operand
 
-addq :: Operand -> Operand -> Asm Operand
+addq :: Ins2
 addq !dst !src
-    | dst <>? normalDst
-    , src <>? anyImm
+    | dst <>? _dst
+    , isQ src
     = do directive "addq" [] -- convert all args to string
          return dst
 addq _ _
     = fail "invalid operand"
+
+add :: Ins2
+add !dst !src
+    |  dst <>? _data         && src <>? _src
+    || dst <>? _dst \\ _addr && src <>? _data
+    = do directive "add" []
+         return dst
+add _ _
+    = fail "invalid operand"
+
+isQ :: Operand -> Bool
+isQ (Imm (Const i)) = 1 <= i && i <= 8
+isQ _               = False
+
+{-
+cgAdd :: ReducedExpr -> ReducedExpr -> Name -> Analyzer s ReducedExpr
+cgAdd l r s = do
+    requireTypesEqual l r
+    case (kind l, kind r, sel s) of
+        (Addr, rk,      Sel_) | isSrc rk           -> cgAdd' 'a'
+        (Addr, rk,      SelA) | isSrc rk           -> cgAdd' 'a'
+        (lk,   rk,      SelA)                      -> fail "invalid for adda"
+
+        (lk,   rk@Imm,  Sel_) | isDst lk && isQ rk -> cgAdd' 'q'
+        (lk,   rk@Imm,  SelQ) | isDst lk && isQ rk -> cgAdd' 'q'
+        (lk,   rk,      SelQ)                      -> fail "invalid for addq"
+
+        (Data, Imm,     Sel_)                      -> cgAdd' 'i'
+        (Data, Imm,     SelI)                      -> cgAdd' 'i'
+        (lk,   rk,      SelI)                      -> fail "invalid for addi"
+
+        (Data, Data,    SelX)                      -> cgAdd' 'x'
+        (lk,   rk,      SelX)                      -> fail "invalid for addx"
+
+        (Data, rk,      Sel_) | isSrc rk           -> cgAdd' ' '
+        (Data, rk,      SelD) | isSrc rk           -> cgAdd' ' '
+        (lk,   Data,    Sel_) | isDstNonAddr lk    -> cgAdd' ' '
+        (lk,   Data,    SelD) | isDstNonAddr lk    -> cgAdd' ' '
+
+        (lk, rk, sel) -> fail "no valid add instruction for arguments"
+      where
+        cgAdd' s = cgIns "add" s $ fmap showOperands [r, l]
+-}        
 
