@@ -19,8 +19,8 @@ import Data.Word
 
 import Asm
 
-newtype DataReg = D Word deriving (Eq, Show)
-newtype AddrReg = A Word deriving (Eq, Show)
+newtype DataReg = D Word8 deriving (Eq, Show)
+newtype AddrReg = A Word8 deriving (Eq, Show)
 
 dregs @ [ d0,  d1,  d2,  d3,  d4,  d5,  d6,  d7]
       = [D 0, D 1, D 2, D 3, D 4, D 5, D 6, D 7]
@@ -68,7 +68,7 @@ data Operand
     deriving (Eq, Show)
 
 newtype OperandSet
-    = OS Word
+    = OS Word8
     deriving (Eq, Show)
 
 instance Monoid OperandSet where
