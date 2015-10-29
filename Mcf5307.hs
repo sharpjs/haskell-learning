@@ -67,6 +67,14 @@ data Operand
     | PcDispIdx             Const Index
     deriving (Eq, Show)
 
+data Sel
+    = Best  -- auto-select best variant
+    | UseG  -- force variant: general (no suffix)
+    | UseA  -- force variant: address
+    | UseI  -- force variant: immediate
+    | UseQ  -- force variant: quick
+    | UseX  -- force variant: extended
+
 newtype OperandSet
     = OS Word8
     deriving (Eq, Show)
@@ -142,55 +150,38 @@ type Ins1 = Operand -> Asm Operand
 type Ins2 = Operand -> Operand -> Asm Operand
 type Ins3 = Operand -> Operand -> Operand -> Asm Operand
 
-addq :: Ins2
-addq !dst !src
-    | dst <>? _dst
-    , isQ src
-    = do directive "addq" [] -- convert all args to string
-         return dst
-addq _ _
-    = fail "invalid operand"
-
-add :: Ins2
-add !dst !src
-    |  dst <>? _data         && src <>? _src
-    || dst <>? _dst \\ _addr && src <>? _data
-    = do directive "add" []
-         return dst
-add _ _
-    = fail "invalid operand"
-
 isQ :: Operand -> Bool
 isQ (Imm (Const i)) = 1 <= i && i <= 8
 isQ _               = False
 
-{-
-cgAdd :: ReducedExpr -> ReducedExpr -> Name -> Analyzer s ReducedExpr
-cgAdd l r s = do
-    requireTypesEqual l r
-    case (kind l, kind r, sel s) of
-        (Addr, rk,      Sel_) | isSrc rk           -> cgAdd' 'a'
-        (Addr, rk,      SelA) | isSrc rk           -> cgAdd' 'a'
-        (lk,   rk,      SelA)                      -> fail "invalid for adda"
+add :: Sel -> Ins2
+add Best !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
+add UseA !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
+add UseA !d          !s                              = err2 "adda" d s
+add Best !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
+add UseQ !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
+add UseQ !d          !s                              = err2 "addq" d s
+add Best !d@(Data _) !s@(Imm _)                      = ins2 "addi" d s
+add UseI !d@(Data _) !s@(Imm _)                      = ins2 "addi" d s
+add UseI !d          !s                              = err2 "addi" d s
+add UseX !d@(Data _) !s@(Data _)                     = ins2 "addx" d s
+add UseX !d          !s                              = err2 "addx" d s
+add Best !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
+add UseG !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
+add Best !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
+add UseG !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
+add _    !d          !s                              = err2 "add"  d s
 
-        (lk,   rk@Imm,  Sel_) | isDst lk && isQ rk -> cgAdd' 'q'
-        (lk,   rk@Imm,  SelQ) | isDst lk && isQ rk -> cgAdd' 'q'
-        (lk,   rk,      SelQ)                      -> fail "invalid for addq"
+add_ = add Best
+addA = add UseA
+addG = add UseG
+addI = add UseI
+addQ = add UseQ
+addX = add UseX
 
-        (Data, Imm,     Sel_)                      -> cgAdd' 'i'
-        (Data, Imm,     SelI)                      -> cgAdd' 'i'
-        (lk,   rk,      SelI)                      -> fail "invalid for addi"
+ins2 :: String -> Ins2
+ins2 _ a b = return a -- TODO
 
-        (Data, Data,    SelX)                      -> cgAdd' 'x'
-        (lk,   rk,      SelX)                      -> fail "invalid for addx"
-
-        (Data, rk,      Sel_) | isSrc rk           -> cgAdd' ' '
-        (Data, rk,      SelD) | isSrc rk           -> cgAdd' ' '
-        (lk,   Data,    Sel_) | isDstNonAddr lk    -> cgAdd' ' '
-        (lk,   Data,    SelD) | isDstNonAddr lk    -> cgAdd' ' '
-
-        (lk, rk, sel) -> fail "no valid add instruction for arguments"
-      where
-        cgAdd' s = cgIns "add" s $ fmap showOperands [r, l]
--}        
+err2 :: String -> Ins2
+err2 _ a b = fail "problem" -- TODO
 
