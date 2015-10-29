@@ -138,12 +138,13 @@ toSet (AddrDispIdx _ _ _) = _addrDispIdx
 toSet (PcDisp        _  ) = _pcDisp
 toSet (PcDispIdx     _ _) = _pcDispIdx
 
-_abs        =  _abs16 <> _abs32
-_reg        =  _data  <> _addr
-_dstInd     =  _addrInd <> _addrIndInc <> _addrIndDec <> _addrDisp <> _addrDispIdx
-_srcInd     =  _dstInd <> _pcDisp <> _pcDispIdx
-_dst        =  _reg <> _dstInd <> _abs
-_src        =  _reg <> _srcInd <> _abs <> _imm
+_abs    =  _abs16 <> _abs32
+_reg    =  _data  <> _addr
+_dst    =  _reg   <> _dstInd <> _abs
+_src    =  _reg   <> _srcInd <> _abs <> _imm
+
+_dstInd =  _addrInd <> _addrIndInc <> _addrIndDec <> _addrDisp <> _addrDispIdx
+_srcInd =   _dstInd                               <>   _pcDisp <>   _pcDispIdx
 
 type Ins0 = Asm Operand
 type Ins1 = Operand -> Asm Operand
@@ -154,30 +155,44 @@ isQ :: Operand -> Bool
 isQ (Imm (Const i)) = 1 <= i && i <= 8
 isQ _               = False
 
-add :: Sel -> Ins2
-add Best !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
-add UseA !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
-add UseA !d          !s                              = err2 "adda" d s
-add Best !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
-add UseQ !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
-add UseQ !d          !s                              = err2 "addq" d s
-add Best !d@(Data _) !s@(Imm _)                      = ins2 "addi" d s
-add UseI !d@(Data _) !s@(Imm _)                      = ins2 "addi" d s
-add UseI !d          !s                              = err2 "addi" d s
-add UseX !d@(Data _) !s@(Data _)                     = ins2 "addx" d s
-add UseX !d          !s                              = err2 "addx" d s
-add Best !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
-add UseG !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
-add Best !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
-add UseG !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
-add _    !d          !s                              = err2 "add"  d s
+--isSrc :: Operand -> Bool
+--isSrc (Data _) = True
 
-add_ = add Best
-addA = add UseA
-addG = add UseG
-addI = add UseI
-addQ = add UseQ
-addX = add UseX
+add :: Sel -> Ins2
+add Best = add_
+add UseA = adda
+add UseG = addg
+add UseI = addi
+add UseQ = addq
+add UseX = addx
+
+add_ :: Ins2
+add_ !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
+add_ !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
+add_ !d@(Data _) !s@(Imm _)                      = ins2 "addi" d s
+add_ !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
+add_ !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
+add_ !d          !s                              = err2 "add"  d s
+
+addg :: Ins2
+addg !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
+addg !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
+
+adda :: Ins2
+adda !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
+adda !d          !s                              = err2 "adda" d s
+
+addi :: Ins2
+addi !d@(Data _) !s@(Imm _)                      = ins2 "addi" d s
+addi !d          !s                              = err2 "addi" d s
+
+addq :: Ins2
+addq !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
+addq !d          !s                              = err2 "addq" d s
+
+addx :: Ins2
+addx !d@(Data _) !s@(Data _)                     = ins2 "addx" d s
+addx !d          !s                              = err2 "addx" d s
 
 ins2 :: String -> Ins2
 ins2 _ a b = return a -- TODO
