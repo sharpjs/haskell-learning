@@ -49,6 +49,7 @@ analyze :: Stmt -> ST s ()
 analyze s = rootScope >>= runReaderT (analyze' s)
 
 -- TODO: Draw the rest of the owl.
+
 analyze' :: Stmt -> Analyzer s ()
 analyze' s = do
     types <- asks $ types . head
