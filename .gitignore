@@ -11,6 +11,7 @@
 *.swp
 *.tmp
 
-# Cabal
+# Build Tools
 .cabal*
+.stack-work/
 
