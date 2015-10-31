@@ -19,8 +19,8 @@ import qualified Data.Text.Lazy         as TL
 import qualified Data.Text.Lazy.Builder as B
 }
 
-$ws     = [\  \t]
-$eos    = [\r \n \;]
+$ws     = [\  \t \r]
+$eos    = [\n \;]
 
 $hex    = [0-9 a-f A-F]
 $dec    = [0-9]
