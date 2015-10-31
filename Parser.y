@@ -19,59 +19,59 @@ import AST
 
 %tokentype  { Token }
 %token
-    id      { Id     $$ }
-    int     { LitInt $$ }
-    str     { LitStr $$ }
-    '/*/'   { TCond  $$ }
-    type    { KwType    }
-    struct  { KwStruct  }
-    union   { KwUnion   }
-    block   { KwBlock   }
-    loop    { KwLoop    }
-    if      { KwIf      }
-    else    { KwElse    }
-    while   { KwWhile   }
-    return  { KwReturn  }
-    jump    { KwJump    }
-    '{'     { BlockL    }
-    '}'     { BlockR    }
-    '('     { ParenL    }
-    ')'     { ParenR    }
-    '['     { BrackL    }
-    ']'     { BrackR    }
-    '@'     { At        }
-    '='     { OpMove    }
-    ':'     { Colon     }
-    ','     { Comma     }
-    ';'     { Eos       }
-    '.'     { OpMem     }
-    '++'    { OpInc     }
-    '--'    { OpDec     }
-    '!'     { OpClr     }
-    '~'     { OpNot     }
-    '*'     { OpMul     }
-    '/'     { OpDiv     }
-    '%'     { OpMod     }
-    '+'     { OpAdd     }
-    '-'     { OpSub     }
-    '<<'    { OpShl     }
-    '>>'    { OpShr     }
-    '&'     { OpAnd     }
-    '^'     { OpXor     }
-    '|'     { OpOr      }
-    '.~'    { OpBChg    }
-    '.!'    { OpBClr    }
-    '.='    { OpBSet    }
-    '.?'    { OpBTst    }
-    '<>'    { OpCmp     }
-    '=='    { OpEq      }
-    '!='    { OpNeq     }
-    '<'     { OpLt      }
-    '>'     { OpGt      }
-    '<='    { OpLte     }
-    '>='    { OpGte     }
-    '=>'    { OpIs      }
-    '->'    { OpFunc    }
+    id      { Id     $$   }
+    int     { LitInt $$   }
+    str     { LitStr $$   }
+    '/*/'   { TCond  $$   }
+    type    { KwType      }
+    struct  { KwStruct    }
+    union   { KwUnion     }
+    block   { KwBlock     }
+    loop    { KwLoop      }
+    if      { KwIf        }
+    else    { KwElse      }
+    while   { KwWhile     }
+    return  { KwReturn    }
+    jump    { KwJump      }
+    '{'     { BlockL      }
+    '}'     { BlockR      }
+    '('     { ParenL      }
+    ')'     { ParenR      }
+    '['     { BracketL    }
+    ']'     { BracketR    }
+    '@'     { At          }
+    '='     { Equal       }
+    ':'     { Colon       }
+    ','     { Comma       }
+    ';'     { Eos         }
+    '.'     { Dot         }
+    '++'    { PlusPlus    }
+    '--'    { MinusMinus  }
+    '!'     { Bang        }
+    '~'     { Tilde       }
+    '*'     { Star        }
+    '/'     { Slash       }
+    '%'     { Percent     }
+    '+'     { Plus        }
+    '-'     { Minus       }
+    '<<'    { LessLess    }
+    '>>'    { MoreMore    }
+    '&'     { Ampersand   }
+    '^'     { Caret       }
+    '|'     { Pipe        }
+    '.~'    { DotTilde    }
+    '.!'    { DotBang     }
+    '.='    { DotEqual    }
+    '.?'    { DotQuestion }
+    '<>'    { LessMore    }
+    '=='    { EqualEqual  }
+    '!='    { BangEqual   }
+    '<'     { Less        }
+    '>'     { More        }
+    '<='    { LessEqual   }
+    '>='    { MoreEqual   }
+    '=>'    { EqualArrow  }
+    '->'    { DashArrow   }
 
 -- Low
 %left       if while

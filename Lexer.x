@@ -55,44 +55,44 @@ $cond   = $op # \/
 <0> jump                { yield $ const KwJump   }
 
 -- Operators & Punctuation
-<0> "{"                 { yield $ const BlockL }
-<0> "}"                 { yield $ const BlockR }
-<0> "("                 { yield $ const ParenL }
-<0> ")"                 { yield $ const ParenR }
-<0> "["                 { yield $ const BrackL }
-<0> "]"                 { yield $ const BrackR }
-<0> "."                 { yield $ const OpMem  }
-<0> "@"                 { yield $ const At     }
-<0> "++"                { yield $ const OpInc  }
-<0> "--"                { yield $ const OpDec  }
-<0> "!"                 { yield $ const OpClr  }
-<0> "~"                 { yield $ const OpNot  }
-<0> "*"                 { yield $ const OpMul  }
-<0> "/"                 { yield $ const OpDiv  }
-<0> "%"                 { yield $ const OpMod  }
-<0> "+"                 { yield $ const OpAdd  }
-<0> "-"                 { yield $ const OpSub  }
-<0> "<<"                { yield $ const OpShl  }
-<0> ">>"                { yield $ const OpShr  }
-<0> "&"                 { yield $ const OpAnd  }
-<0> "^"                 { yield $ const OpXor  }
-<0> "|"                 { yield $ const OpOr   }
-<0> ".~"                { yield $ const OpBChg }
-<0> ".!"                { yield $ const OpBClr }
-<0> ".="                { yield $ const OpBSet }
-<0> ".?"                { yield $ const OpBTst }
-<0> "<>"                { yield $ const OpCmp  }
-<0> "=="                { yield $ const OpEq   }
-<0> "!="                { yield $ const OpNeq  }
-<0> "<"                 { yield $ const OpLt   }
-<0> ">"                 { yield $ const OpGt   }
-<0> "<="                { yield $ const OpLte  }
-<0> ">="                { yield $ const OpGte  }
-<0> "=>"                { yield $ const OpIs   }
-<0> "->"                { yield $ const OpFunc }
-<0> "="                 { yield $ const OpMove }
-<0> ":"                 { yield $ const Colon  }
-<0> ","                 { yield $ const Comma  }
+<0> "{"                 { yield $ const BlockL      }
+<0> "}"                 { yield $ const BlockR      }
+<0> "("                 { yield $ const ParenL      }
+<0> ")"                 { yield $ const ParenR      }
+<0> "["                 { yield $ const BracketL    }
+<0> "]"                 { yield $ const BracketR    }
+<0> "."                 { yield $ const Dot         }
+<0> "@"                 { yield $ const At          }
+<0> "++"                { yield $ const PlusPlus    }
+<0> "--"                { yield $ const MinusMinus  }
+<0> "!"                 { yield $ const Bang        }
+<0> "~"                 { yield $ const Tilde       }
+<0> "*"                 { yield $ const Star        }
+<0> "/"                 { yield $ const Slash       }
+<0> "%"                 { yield $ const Percent     }
+<0> "+"                 { yield $ const Plus        }
+<0> "-"                 { yield $ const Minus       }
+<0> "<<"                { yield $ const LessLess    }
+<0> ">>"                { yield $ const MoreMore    }
+<0> "&"                 { yield $ const Ampersand   }
+<0> "^"                 { yield $ const Caret       }
+<0> "|"                 { yield $ const Pipe        }
+<0> ".~"                { yield $ const DotTilde    }
+<0> ".!"                { yield $ const DotBang     }
+<0> ".="                { yield $ const DotEqual    }
+<0> ".?"                { yield $ const DotQuestion }
+<0> "<>"                { yield $ const LessMore    }
+<0> "=="                { yield $ const EqualEqual  }
+<0> "!="                { yield $ const BangEqual   }
+<0> "<"                 { yield $ const Less        }
+<0> ">"                 { yield $ const More        }
+<0> "<="                { yield $ const LessEqual   }
+<0> ">="                { yield $ const MoreEqual   }
+<0> "=>"                { yield $ const EqualArrow  }
+<0> "->"                { yield $ const DashArrow   }
+<0> "="                 { yield $ const Equal       }
+<0> ":"                 { yield $ const Colon       }
+<0> ","                 { yield $ const Comma       }
 
 -- Identifiers
 <0> $id0 $id*           { yield $ Id }
@@ -126,21 +126,61 @@ $cond   = $op # \/
 -- Tokens
 
 data Token
-    = KwType | KwStruct | KwUnion
-    | KwBlock | KwLoop | KwIf | KwElse  | KwWhile | KwReturn | KwJump  
-    | Id String | LitInt Integer | LitStr String
-    | BlockL | BlockR
-    | ParenL | ParenR
-    | BrackL | BrackR
-    | OpMem  | OpInc  | OpDec  | OpClr | OpNot
-    | OpMul  | OpDiv  | OpMod  | OpAdd | OpSub
-    | OpShl  | OpShr  | OpAnd  | OpXor | OpOr
-    | OpBChg | OpBClr | OpBSet | OpBTst
-    | OpMove | OpCmp  | OpEq   | OpNeq | OpLt | OpGt | OpLte | OpGte | OpIs
-    | OpFunc
+    = KwType
+    | KwStruct
+    | KwUnion
+    | KwBlock
+    | KwLoop
+    | KwIf
+    | KwElse 
+    | KwWhile
+    | KwReturn
+    | KwJump  
+    | Id     String
+    | LitInt Integer
+    | LitStr String
+    | BlockL
+    | BlockR
+    | ParenL
+    | ParenR
+    | BracketL
+    | BracketR
+    | Dot 
+    | At
+    | PlusPlus 
+    | MinusMinus 
+    | Bang
+    | Tilde
+    | Star 
+    | Slash 
+    | Percent 
+    | Plus
+    | Minus
+    | LessLess 
+    | MoreMore 
+    | Ampersand 
+    | Caret
+    | Pipe
+    | DotTilde
+    | DotBang
+    | DotEqual
+    | DotQuestion
+    | LessMore 
+    | EqualEqual  
+    | BangEqual
+    | Less
+    | More
+    | LessEqual
+    | MoreEqual
+    | EqualArrow
+    | DashArrow
     | OpTag String
     | TCond String
-    | At | Colon | Comma | Eos | Eof
+    | Equal
+    | Colon
+    | Comma
+    | Eos
+    | Eof
     deriving (Eq, Show)
 
 -- -----------------------------------------------------------------------------
