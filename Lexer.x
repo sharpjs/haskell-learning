@@ -36,9 +36,11 @@ $cond   = $op # \/
 
 :-
 
+-- Space
 <0> $ws+                ; -- whitespace
 <0> "//" .*             ; -- comment
 
+-- End of Statement
 <0> [$eos] [$ws $eos]*  { yield $ const Eos }
 
 -- Keywords
@@ -53,17 +55,14 @@ $cond   = $op # \/
 <0> jump                { yield $ const KwJump   }
 
 -- Operators & Punctuation
-<0> \{                  { yield $ const BlockL }
-<0> \}                  { yield $ const BlockR }
-<0> \(                  { yield $ const ParenL }
-<0> \)                  { yield $ const ParenR }
-<0> \[                  { yield $ const BrackL }
-<0> \]                  { yield $ const BrackR }
+<0> "{"                 { yield $ const BlockL }
+<0> "}"                 { yield $ const BlockR }
+<0> "("                 { yield $ const ParenL }
+<0> ")"                 { yield $ const ParenR }
+<0> "["                 { yield $ const BrackL }
+<0> "]"                 { yield $ const BrackR }
 <0> "."                 { yield $ const OpMem  }
-<0> \@                  { yield $ const At     }
-<0> \=                  { yield $ const OpMove }
-<0> \:                  { yield $ const Colon  }
-<0> \,                  { yield $ const Comma  }
+<0> "@"                 { yield $ const At     }
 <0> "++"                { yield $ const OpInc  }
 <0> "--"                { yield $ const OpDec  }
 <0> "!"                 { yield $ const OpClr  }
@@ -91,33 +90,35 @@ $cond   = $op # \/
 <0> ">="                { yield $ const OpGte  }
 <0> "=>"                { yield $ const OpIs   }
 <0> "->"                { yield $ const OpFunc }
+<0> "="                 { yield $ const OpMove }
+<0> ":"                 { yield $ const Colon  }
+<0> ","                 { yield $ const Comma  }
 
+-- Identifiers
 <0> $id0 $id*           { yield $ Id }
 
+-- Numbers
 <0>      $dec [$dec _]* { yield $ LitInt . fromBase 10          }
 <0> 0x_* $hex [$dec _]* { yield $ LitInt . fromBase 16 . drop 2 }
 <0> 0o_* $oct [$oct _]* { yield $ LitInt . fromBase  8 . drop 2 }
 <0> 0b_* $bin [$bin _]* { yield $ LitInt . fromBase  2 . drop 2 }
 
-<0> \"                  { enterString }
+-- Strings
+<0>   \"                { enterString }
 <str> [^\"\\]           { addToString $ head }
-<str> \\ 0              { addToString $ const '\0' }    -- 00 null
-<str> \\ a              { addToString $ const '\a' }    -- 07 alert
-<str> \\ b              { addToString $ const '\b' }    -- 08 backspace
-<str> \\ e              { addToString $ const '\ESC' }  -- 1B escape
-<str> \\ f              { addToString $ const '\f' }    -- 0C form feed
-<str> \\ n              { addToString $ const '\n' }    -- 0A line feed
-<str> \\ r              { addToString $ const '\r' }    -- 0D carriage return
-<str> \\ t              { addToString $ const '\t' }    -- 09 horizontal tab
-<str> \\ v              { addToString $ const '\v' }    -- 0B vertical tab
-<str> \\ \'             { addToString $ const '\'' }    -- 27 single quote
-<str> \\ \"             { addToString $ const '\"' }    -- 22 double quote
-<str> \\ \\             { addToString $ const '\\' }    -- 5C backslash
+<str> \\ 0              { addToString $ const '\0' } -- 00 null
+<str> \\ n              { addToString $ const '\n' } -- 0A line feed
+<str> \\ r              { addToString $ const '\r' } -- 0D carriage return
+<str> \\ t              { addToString $ const '\t' } -- 09 horizontal tab
+<str> \\ \'             { addToString $ const '\'' } -- 27 single quote
+<str> \\ \"             { addToString $ const '\"' } -- 22 double quote
+<str> \\ \\             { addToString $ const '\\' } -- 5C backslash
 <str> \\ x  $hex{2}     { addToString $ chr . fromInteger . fromBase 16 . drop 2 }
 <str> \\ u\{$hex{1,6}\} { addToString $ chr . fromInteger . fromBase 16 . drop 3 }
---<str> \\ [^0abefnrtvxu] { failLex "Invalid character escape." }
+--<str> \\ [^0nrtxu]    { failLex "Invalid character escape." }
 <str> \"                { leaveString }
 
+-- Conditions
 <0> \/ $cond+ \/        { condition }
 
 {
@@ -228,7 +229,10 @@ initLexState input = LexState
 -- -----------------------------------------------------------------------------
 -- Lexer monad
 
--- defines a world called 'Lex' that has an operation returning a
+-- This reinvents some basic wheels like the State monad, but was my first monad,
+-- and so it is retained for educational value.
+
+-- Defines a world called 'Lex' that has an operation returning a
 newtype Lex a = Lex { runLex :: LexState -> (a, LexState) }
 
 instance Functor Lex where
