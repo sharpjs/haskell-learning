@@ -31,95 +31,96 @@ $al     = [a-z A-Z]
 $id0    = [$al _]
 $id     = [$al _ $dec]
 
+$punc   = [\" \' \( \) \, \[ \] \` \{ \}]
 $op     = [\! \# \$ \% \& \* \+ \- \. \/ \: \< \= \> \? \@ \\ \^ \_ \| \~]
 $cond   = $op # \/
 
 :-
 
--- Space
-<0> $ws+                ; -- whitespace
-<0> "//" .*             ; -- comment
-
--- End of Statement
-<0> [$eos] [$ws $eos]*  { yield $ const Eos }
+-- Ignored
+<0> $ws+        ; -- whitespace
+<0> "//" .*     ; -- comment
 
 -- Keywords
-<0> type                { yield $ const KwType   }
-<0> struct              { yield $ const KwStruct }
-<0> union               { yield $ const KwUnion  }
-<0> loop                { yield $ const KwLoop   }
-<0> if                  { yield $ const KwIf     }
-<0> else                { yield $ const KwElse   }
-<0> while               { yield $ const KwWhile  }
-<0> return              { yield $ const KwReturn }
-<0> jump                { yield $ const KwJump   }
+<0> type        { yield $ const KwType      }
+<0> struct      { yield $ const KwStruct    }
+<0> union       { yield $ const KwUnion     }
+<0> loop        { yield $ const KwLoop      }
+<0> if          { yield $ const KwIf        }
+<0> else        { yield $ const KwElse      }
+<0> while       { yield $ const KwWhile     }
+<0> return      { yield $ const KwReturn    }
+<0> jump        { yield $ const KwJump      }
 
 -- Operators & Punctuation
-<0> "{"                 { yield $ const BlockL      }
-<0> "}"                 { yield $ const BlockR      }
-<0> "("                 { yield $ const ParenL      }
-<0> ")"                 { yield $ const ParenR      }
-<0> "["                 { yield $ const BracketL    }
-<0> "]"                 { yield $ const BracketR    }
-<0> "."                 { yield $ const Dot         }
-<0> "@"                 { yield $ const At          }
-<0> "++"                { yield $ const PlusPlus    }
-<0> "--"                { yield $ const MinusMinus  }
-<0> "!"                 { yield $ const Bang        }
-<0> "~"                 { yield $ const Tilde       }
-<0> "*"                 { yield $ const Star        }
-<0> "/"                 { yield $ const Slash       }
-<0> "%"                 { yield $ const Percent     }
-<0> "+"                 { yield $ const Plus        }
-<0> "-"                 { yield $ const Minus       }
-<0> "<<"                { yield $ const LessLess    }
-<0> ">>"                { yield $ const MoreMore    }
-<0> "&"                 { yield $ const Ampersand   }
-<0> "^"                 { yield $ const Caret       }
-<0> "|"                 { yield $ const Pipe        }
-<0> ".~"                { yield $ const DotTilde    }
-<0> ".!"                { yield $ const DotBang     }
-<0> ".="                { yield $ const DotEqual    }
-<0> ".?"                { yield $ const DotQuestion }
-<0> "<>"                { yield $ const LessMore    }
-<0> "=="                { yield $ const EqualEqual  }
-<0> "!="                { yield $ const BangEqual   }
-<0> "<"                 { yield $ const Less        }
-<0> ">"                 { yield $ const More        }
-<0> "<="                { yield $ const LessEqual   }
-<0> ">="                { yield $ const MoreEqual   }
-<0> "=>"                { yield $ const EqualArrow  }
-<0> "->"                { yield $ const DashArrow   }
-<0> "="                 { yield $ const Equal       }
-<0> ":"                 { yield $ const Colon       }
-<0> ","                 { yield $ const Comma       }
+<0> "{"         { yield $ const BlockL      }
+<0> "}"         { yield $ const BlockR      }
+<0> "("         { yield $ const ParenL      }
+<0> ")"         { yield $ const ParenR      }
+<0> "["         { yield $ const BracketL    }
+<0> "]"         { yield $ const BracketR    }
+<0> "."         { yield $ const Dot         }
+<0> "@"         { yield $ const At          }
+<0> "++"        { yield $ const PlusPlus    }
+<0> "--"        { yield $ const MinusMinus  }
+<0> "!"         { yield $ const Bang        }
+<0> "~"         { yield $ const Tilde       }
+<0> "*"         { yield $ const Star        }
+<0> "/"         { yield $ const Slash       }
+<0> "%"         { yield $ const Percent     }
+<0> "+"         { yield $ const Plus        }
+<0> "-"         { yield $ const Minus       }
+<0> "<<"        { yield $ const LessLess    }
+<0> ">>"        { yield $ const MoreMore    }
+<0> "&"         { yield $ const Ampersand   }
+<0> "^"         { yield $ const Caret       }
+<0> "|"         { yield $ const Pipe        }
+<0> ".~"        { yield $ const DotTilde    }
+<0> ".!"        { yield $ const DotBang     }
+<0> ".="        { yield $ const DotEqual    }
+<0> ".?"        { yield $ const DotQuestion }
+<0> "<>"        { yield $ const LessMore    }
+<0> "=="        { yield $ const EqualEqual  }
+<0> "!="        { yield $ const BangEqual   }
+<0> "<"         { yield $ const Less        }
+<0> ">"         { yield $ const More        }
+<0> "<="        { yield $ const LessEqual   }
+<0> ">="        { yield $ const MoreEqual   }
+<0> "=>"        { yield $ const EqualArrow  }
+<0> "->"        { yield $ const DashArrow   }
+<0> "="         { yield $ const Equal       }
+<0> ":"         { yield $ const Colon       }
+<0> ","         { yield $ const Comma       }
+
+-- End of Statement
+<0> [$eos] [$ws $eos]*      { yield $ const Eos }
 
 -- Identifiers
-<0> $id0 $id*           { yield $ Id }
+<0> $id0 $id*               { yield $ Id }
 
 -- Numbers
-<0>      $dec [$dec _]* { yield $ LitInt . fromBase 10          }
-<0> 0x_* $hex [$dec _]* { yield $ LitInt . fromBase 16 . drop 2 }
-<0> 0o_* $oct [$oct _]* { yield $ LitInt . fromBase  8 . drop 2 }
-<0> 0b_* $bin [$bin _]* { yield $ LitInt . fromBase  2 . drop 2 }
+<0>      $dec [$dec _]*     { yield $ LitInt . fromBase 10          }
+<0> 0x_* $hex [$dec _]*     { yield $ LitInt . fromBase 16 . drop 2 }
+<0> 0o_* $oct [$oct _]*     { yield $ LitInt . fromBase  8 . drop 2 }
+<0> 0b_* $bin [$bin _]*     { yield $ LitInt . fromBase  2 . drop 2 }
 
 -- Strings
-<0>   \"                { enterString }
-<str> [^\"\\]           { addToString $ head }
-<str> \\ 0              { addToString $ const '\0' } -- 00 null
-<str> \\ n              { addToString $ const '\n' } -- 0A line feed
-<str> \\ r              { addToString $ const '\r' } -- 0D carriage return
-<str> \\ t              { addToString $ const '\t' } -- 09 horizontal tab
-<str> \\ \'             { addToString $ const '\'' } -- 27 single quote
-<str> \\ \"             { addToString $ const '\"' } -- 22 double quote
-<str> \\ \\             { addToString $ const '\\' } -- 5C backslash
-<str> \\ x  $hex{2}     { addToString $ chr . fromInteger . fromBase 16 . drop 2 }
-<str> \\ u\{$hex{1,6}\} { addToString $ chr . fromInteger . fromBase 16 . drop 3 }
---<str> \\ [^0nrtxu]    { failLex "Invalid character escape." }
-<str> \"                { leaveString }
+<0>   \"                    { enterString }
+<str> [^\"\\]               { addToString $ head }
+<str> \\ 0                  { addToString $ const '\0' } -- 00 null
+<str> \\ n                  { addToString $ const '\n' } -- 0A line feed
+<str> \\ r                  { addToString $ const '\r' } -- 0D carriage return
+<str> \\ t                  { addToString $ const '\t' } -- 09 horizontal tab
+<str> \\ \'                 { addToString $ const '\'' } -- 27 single quote
+<str> \\ \"                 { addToString $ const '\"' } -- 22 double quote
+<str> \\ \\                 { addToString $ const '\\' } -- 5C backslash
+<str> \\ x   $hex{2}        { addToString $ chr . fromInteger . fromBase 16 . drop 2 }
+<str> \\ u\{ $hex{1,6} \}   { addToString $ chr . fromInteger . fromBase 16 . drop 3 }
+--tr> \\ [^0nrtxu]          { failLex "Invalid character escape." }
+<str> \"                    { leaveString }
 
 -- Conditions
-<0> \/ $cond+ \/        { condition }
+<0> \/ $cond+ \/            { condition }
 
 {
 -- -----------------------------------------------------------------------------
@@ -136,9 +137,9 @@ data Token
     | KwWhile
     | KwReturn
     | KwJump  
-    | Id     String
-    | LitInt Integer
-    | LitStr String
+    | Id      String
+    | LitInt  Integer
+    | LitStr  String
     | BlockL
     | BlockR
     | ParenL
