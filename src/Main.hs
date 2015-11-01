@@ -1,5 +1,9 @@
 module Main where
 
+import Types
+
 main :: IO ()
 main = do
-  putStrLn "hello world"
+    let n = valueWidth $ IntT 2 3 True
+    putStrLn $ "hello world " ++ show n
+
