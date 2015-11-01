@@ -364,7 +364,7 @@ type LexAction a = LexMatch -> Lex a
 
 -- Yields a value to the lexer's result stream
 yield :: (String -> t) -> LexAction t
-yield f m = return . f . text $ m
+yield f = return . f . text
 
 -- Returns the integer represented by a string
 fromBase :: Int -> String -> Integer
