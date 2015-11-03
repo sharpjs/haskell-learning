@@ -22,6 +22,6 @@ import Types
 
 main :: IO ()
 main = do
-    let n = valueWidth $ IntT 2 3 True
+    let n = i32 == f64
     putStrLn $ "hello world " ++ show n
 

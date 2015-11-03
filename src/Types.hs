@@ -18,56 +18,86 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-{-# Language GADTs #-}
-{-# Language StandaloneDeriving #-}
-{-# Language RankNTypes #-}
-
 module Types where
 
 import Data.Bits (bit, shiftL)
 
 type Name = Int -- from the interner
 
-data Type k where
-    IntT      :: Int -> Int -> Bool   -> Type Integer
-    FloatT    :: Int -> Int           -> Type Double
-    PointerT  :: Type a -> Type b     -> Type ()
-    ArrayT    :: Type a -> Maybe Int  -> Type ()
-    StructT   :: [Member]             -> Type ()
-    UnionT    :: [Member]             -> Type ()
-    FunctionT :: [Member] -> [Member] -> Type ()
+data Type
+    = IntT      Int Int Bool
+    | FloatT    Int Int
+    | ArrayT    Type (Maybe Int)
+    | PtrT      Type Type
+    | StructT   [Member]
+    | UnionT    [Member]
+    | FuncT     [Member] [Member]
+    deriving (Eq, Show)
 
---deriving instance Eq   (Type k)
---deriving instance Show (Type k)
+data Member
+    = Member Name Type
+    deriving (Eq, Show)
 
-data Member where
-    Member :: Name -> Type k -> Member
+i32 :: Type
+i32 = IntT 32 32 True
 
-class    Scalar t
-instance Scalar Integer
-instance Scalar Double
+f64 :: Type
+f64 = FloatT 64 64
 
-isScalar :: Type k -> Bool
+isScalar :: Type -> Bool
 isScalar (IntT   _ _ _) = True
 isScalar (FloatT _ _  ) = True
 isScalar _              = False
 
-valueWidth :: (Scalar k) => Type k -> Int
-valueWidth (IntT   w _ _) = w
-valueWidth (FloatT w _  ) = w
+valueSize :: Type -> Maybe Int
+valueSize (IntT   s _ _) = Just s
+valueSize (FloatT s _  ) = Just s
+valueSize _              = Nothing
 
-storeWidth :: (Scalar k) => Type k -> Int
-storeWidth (IntT   _ w _) = w
-storeWidth (FloatT _ w  ) = w
+storeSize :: Type -> Maybe Int
+storeSize (IntT   _ s _) = Just s
+storeSize (FloatT _ s  ) = Just s
+storeSize _              = Nothing
 
-isSigned :: Type Integer -> Bool
-isSigned (IntT  _ _ s) = s
+isSigned :: Type -> Bool
+isSigned (IntT   _ _ s) = s
+isSigned (FloatT _ _  ) = True
+isSigned _              = False
 
-minValue :: Type Integer -> Integer
-minValue (IntT _ _ False) = 0
-minValue (IntT w _ True ) = 0 - bit (w - 1)
+members :: Type -> [Member]
+members (StructT ms) = ms
+members (UnionT  ms) = ms
+members _            = []
 
-maxValue :: Type Integer -> Integer
-maxValue (IntT w _ False) = bit (w    ) - 1
-maxValue (IntT w _ True ) = bit (w - 1) - 1
+params :: Type -> [Member]
+params (FuncT ps _) = ps
+params _            = []
+
+returns :: Type -> [Member]
+returns (FuncT _ rs) = rs
+returns _            = []
+
+inhabits :: Type -> Value -> Bool
+inhabits (IntT   w _ s) (IntV   v) = (minInteger w s) <= v && v <= (maxInteger w s)
+inhabits (FloatT w _  ) (FloatV v) = True
+inhabits _              _          = False
+
+data Value
+    = IntV   Integer
+    | FloatV Double
+    deriving (Eq, Show)
+
+class    ToValue a       where toValue :: a -> Value
+instance ToValue Integer where toValue = IntV
+instance ToValue Double  where toValue = FloatV
+
+minInteger :: Int -> Bool -> Integer
+minInteger w False | w > 0 = 0
+minInteger w True  | w > 0 = 0 - bit (w - 1)
+minInteger _ _             = undefined
+
+maxInteger :: Int -> Bool -> Integer
+maxInteger w False | w > 0 = bit (w    ) - 1
+maxInteger w True  | w > 0 = bit (w - 1) - 1
+maxInteger _ _             = undefined
 
