@@ -38,11 +38,18 @@ data Member
     = Member Name Type
     deriving (Eq, Show)
 
-i32 :: Type
-i32 = IntT 32 32 True
+;  u8 :: Type ;  u8 = IntT  8  8 False
+; u16 :: Type ; u16 = IntT 16 16 False
+; u32 :: Type ; u32 = IntT 32 32 False
+; u64 :: Type ; u64 = IntT 64 64 False
 
-f64 :: Type
-f64 = FloatT 64 64
+;  i8 :: Type ;  i8 = IntT  8  8 True
+; i16 :: Type ; i16 = IntT 16 16 True
+; i32 :: Type ; i32 = IntT 32 32 True
+; i64 :: Type ; i64 = IntT 64 64 True
+
+; f32 :: Type ; f32 = FloatT 32 32
+; f64 :: Type ; f64 = FloatT 64 64
 
 isScalar :: Type -> Bool
 isScalar (IntT   _ _ _) = True
