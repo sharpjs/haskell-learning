@@ -17,8 +17,8 @@ data Stmt
     | Func      String Type Stmt
     | Eval      Exp
     | Loop      Stmt
-    | If        Test Stmt Stmt
-    | While     Test Stmt
+    | If        Cond Stmt Stmt
+    | While     Cond Stmt
     deriving (Eq, Show)
 
 data Type
@@ -60,8 +60,9 @@ data Exp
     | BSet   String Exp Exp
     | BTst   String Exp Exp
     | Cmp    String Exp Exp
+    | Test   String Exp
     | Move   String Exp Exp
-    | Scc    String Exp Test
+    | Scc    String Exp Cond
     deriving (Eq, Show)
 
 data Addr
@@ -73,8 +74,16 @@ data Addr
     | Scaled  Exp Exp
     deriving (Eq, Show)
 
-data Test
-    = Test String (Maybe Exp)
+data Cond
+    = Cond Flag (Maybe Exp)
+    deriving (Eq, Show)
+
+data Flag
+    = (:==) | (:!=) | (:<) | (:>) | (:<=) | (:>=)
+    | (:-)  | (:!-)
+    | (:%)  | (:!%)
+    | (:^)  | (:!^)
+    | Flag String
     deriving (Eq, Show)
 
 data Signedness

@@ -22,7 +22,6 @@ import AST
     id      { Id     $$   }
     int     { LitInt $$   }
     str     { LitStr $$   }
-    '/*/'   { TCond  $$   }
     type    { KwType      }
     struct  { KwStruct    }
     union   { KwUnion     }
@@ -210,22 +209,29 @@ Addr        :: { Addr }
 
 -- Conditions
 
-Cond        :: { Test }
+Cond        :: { Cond }
             -- A boolean condition, which can be an explicit test or an
             -- expression implicitly tested for nonzero.
-            : Exp                       { Test "!0" (Just $1) }
+            : Exp                       { Cond (:!=) (Just $1) }
             | Test                      { $1 }
 
-Test        :: { Test }
+Test        :: { Cond }
             -- An explicit test for a boolean condition.
-            : '/*/'                     { Test  $1  (Nothing) }
-            | Exp '=>' Sel '/*/'        { Test  $4  (Just $1) }
-            | Exp '==' Sel Exp          { Test "==" (Just $ Cmp $3 $1 $4) }
-            | Exp '!=' Sel Exp          { Test "!=" (Just $ Cmp $3 $1 $4) }
-            | Exp '<'  Sel Exp          { Test "<"  (Just $ Cmp $3 $1 $4) }
-            | Exp '>'  Sel Exp          { Test ">"  (Just $ Cmp $3 $1 $4) }
-            | Exp '<=' Sel Exp          { Test "<=" (Just $ Cmp $3 $1 $4) }
-            | Exp '>=' Sel Exp          { Test ">=" (Just $ Cmp $3 $1 $4) }
+            : Flag                      { Cond $1    (Nothing) }
+            | Exp '=>' Flag             { Cond $3    (Just $1) }
+            | Exp '==' Sel Exp          { Cond (:==) (Just $ Cmp $3 $1 $4) }
+            | Exp '!=' Sel Exp          { Cond (:!=) (Just $ Cmp $3 $1 $4) }
+            | Exp '<'  Sel Exp          { Cond (:< ) (Just $ Cmp $3 $1 $4) }
+            | Exp '>'  Sel Exp          { Cond (:> ) (Just $ Cmp $3 $1 $4) }
+            | Exp '<=' Sel Exp          { Cond (:<=) (Just $ Cmp $3 $1 $4) }
+            | Exp '>=' Sel Exp          { Cond (:>=) (Just $ Cmp $3 $1 $4) }
+
+
+Flag        :: { Flag }
+            : '/' '==' '/'              { (:==) }
+            | '/' '!=' '/'              { (:!=) }
+            | '/' int  '/'              { Flag $ show $2 }
+            | '/' id   '/'              { Flag $2 }
 
 {
 parse :: String -> [Stmt]

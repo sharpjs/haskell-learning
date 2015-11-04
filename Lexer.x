@@ -119,8 +119,6 @@ $cond   = $op # \/
 --tr> \\ [^0nrtxu]          { failLex "Invalid character escape." }
 <str> \"                    { leaveString }
 
--- Conditions
-<0> \/ $cond+ \/            { condition }
 
 {
 -- -----------------------------------------------------------------------------
@@ -176,7 +174,6 @@ data Token
     | EqualArrow
     | DashArrow
     | OpTag String
-    | TCond String
     | Equal
     | Colon
     | Comma
@@ -393,10 +390,6 @@ leaveString _ = do
     setStr . B.fromString $ ""
     setStartCode 0
     return . LitStr . TL.unpack . B.toLazyText $ b
-
-condition :: LexAction Token
-condition m =
-    return . TCond . take (len m - 2) . drop 1 . text $ m
 
 -- End Wrapper Code
 }
