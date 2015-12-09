@@ -119,6 +119,20 @@ $cond   = $op # \/
 --tr> \\ [^0nrtxu]          { failLex "Invalid character escape." }
 <str> \"                    { leaveString }
 
+-- Char
+<0>    \'                   { enterString }
+<char> [^\'\\]              { addToString $ head }
+<char> \\ 0                 { addToString $ const '\0' } -- 00 null
+<char> \\ n                 { addToString $ const '\n' } -- 0A line feed
+<char> \\ r                 { addToString $ const '\r' } -- 0D carriage return
+<char> \\ t                 { addToString $ const '\t' } -- 09 horizontal tab
+<char> \\ \'                { addToString $ const '\'' } -- 27 single quote
+<char> \\ \"                { addToString $ const '\"' } -- 22 double quote
+<char> \\ \\                { addToString $ const '\\' } -- 5C backslash
+<char> \\ x   $hex{2}       { addToString $ chr . fromInteger . fromBase 16 . drop 2 }
+<char> \\ u\{ $hex{1,6} \}  { addToString $ chr . fromInteger . fromBase 16 . drop 3 }
+--har> \\ [^0nrtxu]         { failLex "Invalid character escape." }
+<char> \'                   { leaveString }
 
 {
 -- -----------------------------------------------------------------------------
@@ -138,6 +152,7 @@ data Token
     | Id      String
     | LitInt  Integer
     | LitStr  String
+    | LitChar Char
     | BlockL
     | BlockR
     | ParenL

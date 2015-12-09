@@ -1,4 +1,6 @@
 {-
+    Symbols & Symbol Table
+
     This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
     
@@ -16,13 +18,10 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Main where
+module Aex.Symbols where
 
-import Aex.Types
-import Aex.AST
-
-main :: IO ()
-main = do
-    let n = i32 == f64
-    putStrLn $ "hello world " ++ show n
+data Symbol
+    = Symbol Text
+             Type
+             Pos
 

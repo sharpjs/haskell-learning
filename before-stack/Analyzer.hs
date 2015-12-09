@@ -51,9 +51,8 @@ analyze s = rootScope >>= runReaderT (analyze' s)
 -- TODO: Draw the rest of the owl.
 
 analyze' :: Stmt -> Analyzer s ()
-analyze' s = do
-    types <- asks $ types . head
-    lift $ H.insert types B.empty (TypeRef "" Nothing)
+analyze' (TypeDef n t) = defineType n t
+analyze' _             = return ()
 
 defineType :: Name -> Type -> Analyzer s ()
 defineType name t = do

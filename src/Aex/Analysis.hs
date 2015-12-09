@@ -1,4 +1,6 @@
 {-
+    Analysis Phases
+
     This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
     
@@ -16,13 +18,19 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Main where
+module Aex.Analysis where
 
-import Aex.Types
-import Aex.AST
+import AST
+import Control.Monad.ST
 
-main :: IO ()
-main = do
-    let n = i32 == f64
-    putStrLn $ "hello world " ++ show n
+scanDecls :: [Stmt] -> ST s ()
+scanDecls = foldl
+
+scanStmt (Block ss) = scanStmts ss
+scanStmt (Label n) = return ()
+scanStmt (Bss n t) = defineSym n t
+
+-- 1: collect defined names and their types
+-- 2: type check, const reduction, code gen
+
 

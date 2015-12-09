@@ -18,7 +18,7 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Types where
+module Aex.Types where
 
 import Data.Bits (bit, shiftL)
 
