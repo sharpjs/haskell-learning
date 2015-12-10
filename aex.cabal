@@ -1,22 +1,24 @@
-name:           aex
-version:        0.1.0.0
-synopsis:       Assembly Expression Language
-description:    Just a toy project to learn Haskell.
-homepage:       http://github.com/sharpjs/aex#readme
-license:        GPL-3
-license-file:   LICENSE
-author:         Jeff Sharp
-maintainer:     jeff.sharp@git
-copyright:      Copyright (C) 2015 Jeff Sharp
-category:       Compiler
-build-type:     Simple
-cabal-version:  >= 1.10
+name:               aex
+version:            0.1.0.0
+synopsis:           Assembly Expression Language
+description:        Just a toy project to learn Haskell.
+homepage:           http://github.com/sharpjs/aex#readme
+license:            GPL-3
+license-file:       LICENSE
+author:             Jeff Sharp
+maintainer:         jeff.sharp@git
+copyright:          Copyright (C) 2015 Jeff Sharp
+category:           Compiler
+build-type:         Simple
+cabal-version:      >= 1.10
 
 executable aex
-  hs-source-dirs:   src
-  main-is:          Main.hs
-  other-modules:    Aex.AST
-                    Aex.Types
-  build-depends:    base >= 4.7 && < 5
-  default-language: Haskell2010
+  hs-source-dirs:       src
+  main-is:              Main.hs
+  other-modules:        Aex.AST
+                        Aex.Types
+                        Aex.Util
+  build-depends:        base >= 4.7 && < 5
+                      , bytestring
+  default-language:     Haskell2010
 

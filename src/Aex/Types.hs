@@ -1,5 +1,5 @@
 {-
-    Type System
+    Types
 
     This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
@@ -20,56 +20,81 @@
 
 module Aex.Types where
 
-import Data.Bits (bit, shiftL)
-
-type Name = Int -- from the interner
+import Aex.Util
+import Data.Bits (bit)
 
 data Type
-    = IntT      Int Int Bool
-    | FloatT    Int Int
-    | ArrayT    Type (Maybe Int)
+    = RefT      Name
+    | IntT      (Maybe IntSpec)
+    | FloatT    (Maybe FloatSpec)
+    | ArrayT    Type (Maybe Integer)
     | PtrT      Type Type
     | StructT   [Member]
     | UnionT    [Member]
-    | FuncT     [Member] [Member]
+    | FuncT     [Member] [Member]    
     deriving (Eq, Show)
 
-data Member
-    = Member Name Type
-    deriving (Eq, Show)
+type IntSpec = (Width, Width, Bool)
+    -- value width, in bits (i.e. bits of value)
+    -- store width, in bits (i.e. bits of value + bits of padding)
+    -- signed
 
-;  u8 :: Type ;  u8 = IntT  8  8 False
-; u16 :: Type ; u16 = IntT 16 16 False
-; u32 :: Type ; u32 = IntT 32 32 False
-; u64 :: Type ; u64 = IntT 64 64 False
+type FloatSpec = (Width, Width)
+    -- value width, in bits (i.e. bits of value)
+    -- store width, in bits (i.e. bits of value + bits of padding)
 
-;  i8 :: Type ;  i8 = IntT  8  8 True
-; i16 :: Type ; i16 = IntT 16 16 True
-; i32 :: Type ; i32 = IntT 32 32 True
-; i64 :: Type ; i64 = IntT 64 64 True
+type Member = (Name, Type)
 
-; f32 :: Type ; f32 = FloatT 32 32
-; f64 :: Type ; f64 = FloatT 64 64
+-- Built-in integral types
+int = IntT Nothing
+u8  = IntT (Just ( 8,  8, False))
+u16 = IntT (Just (16, 16, False))
+u32 = IntT (Just (32, 32, False))
+u64 = IntT (Just (64, 64, False))
+i8  = IntT (Just ( 8,  8, True ))
+i16 = IntT (Just (16, 16, True ))
+i32 = IntT (Just (32, 32, True ))
+i64 = IntT (Just (64, 64, True ))
+
+-- Built-in floating-point types
+float = FloatT Nothing
+f32   = FloatT (Just (32, 32))
+f64   = FloatT (Just (64, 64))
 
 isScalar :: Type -> Bool
-isScalar (IntT   _ _ _) = True
-isScalar (FloatT _ _  ) = True
-isScalar _              = False
+isScalar (IntT   _) = True
+isScalar (FloatT _) = True
+isScalar _          = False
 
-valueSize :: Type -> Maybe Int
-valueSize (IntT   s _ _) = Just s
-valueSize (FloatT s _  ) = Just s
-valueSize _              = Nothing
+isSized :: Type -> Bool
+isSized (IntT   (Just _)) = True
+isSized (FloatT (Just _)) = True
+isSized _                 = False
 
-storeSize :: Type -> Maybe Int
-storeSize (IntT   _ s _) = Just s
-storeSize (FloatT _ s  ) = Just s
-storeSize _              = Nothing
+valueWidth :: Type -> Maybe Width
+valueWidth (IntT   (Just (w, _, _))) = Just w
+valueWidth (FloatT (Just (w, _   ))) = Just w
+valueWidth _                         = Nothing
+
+storeWidth :: Type -> Maybe Width
+storeWidth (IntT   (Just (_, w, _))) = Just w
+storeWidth (FloatT (Just (_, w   ))) = Just w
+storeWidth _                         = Nothing
 
 isSigned :: Type -> Bool
-isSigned (IntT   _ _ s) = s
-isSigned (FloatT _ _  ) = True
-isSigned _              = False
+isSigned (IntT   (Just (_, _, s))) = s
+isSigned (FloatT (Just (_, _   ))) = True
+isSigned _                         = False
+
+minInteger :: Width -> Bool -> Integer
+minInteger w False | w > 0 = 0
+minInteger w True  | w > 0 = 0 - bit (fromIntegral w - 1)
+minInteger _ _             = undefined
+
+maxInteger :: Width -> Bool -> Integer
+maxInteger w False | w > 0 = bit (fromIntegral w    ) - 1
+maxInteger w True  | w > 0 = bit (fromIntegral w - 1) - 1
+maxInteger _ _             = undefined
 
 members :: Type -> [Member]
 members (StructT ms) = ms
@@ -84,27 +109,16 @@ returns :: Type -> [Member]
 returns (FuncT _ rs) = rs
 returns _            = []
 
-inhabits :: Type -> Value -> Bool
-inhabits (IntT   w _ s) (IntV   v) = (minInteger w s) <= v && v <= (maxInteger w s)
-inhabits (FloatT w _  ) (FloatV v) = True
-inhabits _              _          = False
-
-data Value
-    = IntV   Integer
-    | FloatV Double
-    deriving (Eq, Show)
-
-class    ToValue a       where toValue :: a -> Value
-instance ToValue Integer where toValue = IntV
-instance ToValue Double  where toValue = FloatV
-
-minInteger :: Int -> Bool -> Integer
-minInteger w False | w > 0 = 0
-minInteger w True  | w > 0 = 0 - bit (w - 1)
-minInteger _ _             = undefined
-
-maxInteger :: Int -> Bool -> Integer
-maxInteger w False | w > 0 = bit (w    ) - 1
-maxInteger w True  | w > 0 = bit (w - 1) - 1
-maxInteger _ _             = undefined
-
+-- inhabits :: Type -> Value -> Bool
+-- inhabits (IntT   w _ s) (IntV   v) = (minInteger w s) <= v && v <= (maxInteger w s)
+-- inhabits (FloatT w _  ) (FloatV v) = True
+-- inhabits _              _          = False
+-- 
+-- data Value
+--     = IntV   Integer
+--     | FloatV Double
+--     deriving (Eq, Show)
+-- 
+-- class    ToValue a       where toValue :: a -> Value
+-- instance ToValue Integer where toValue = IntV
+-- instance ToValue Double  where toValue = FloatV

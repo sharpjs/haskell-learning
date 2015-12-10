@@ -1,77 +1,75 @@
 {-
-    Abstract Syntax tree
+    Abstract Syntax Tree
 
-    Part of Aex
+    This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
+    
+    AEx is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published
+    by the Free Software Foundation, either version 3 of the License,
+    or (at your option) any later version.
+    
+    AEx is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+    the GNU General Public License for more details.
+    
+    You should have received a copy of the GNU General Public License
+    along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
 module Aex.AST where
 
+import Aex.Types
+import Aex.Util
+
 data Stmt
-    = Block     [Stmt]
-    | TypeDef   String Type
-    | Label     String
-    | Bss       String Type
-    | Data      String Type Exp
-    | Alias     String Type Exp
-    | Func      String Type Stmt
+    -- Meta
+    = Empty
+    | Block     [Stmt]
+    -- Declaration
+    | TypeDef   Name Type
+    | Label     Name
+    | Bss       Name Type
+    | Data      Name Type Exp
+    | Alias     Name Type Exp
+    | Func      Name Type Stmt
+    -- Execution
     | Eval      Exp
     | Loop      Stmt
     | If        Cond Stmt Stmt
     | While     Cond Stmt
     deriving (Eq, Show)
 
-data Type
-    = TypeRef    String (Maybe Integer)
-    | ArrayType  Type   (Maybe Integer)
-    | PtrType    Type   (Maybe Type)
-    | StructType [Member]
-    | UnionType  [Member]
-    | FuncType   [Member] [Member]
-    deriving (Eq, Show)
-
-data Member
-    = Member String Type
-    deriving (Eq, Show)
-
 data Exp
-    = IdVal  String
+    = ValRef Name
     | IntVal Integer
-    | StrVal String
-    | Deref  [Addr]
-    | Acc    Exp String
-    | Inc    String Exp
-    | Dec    String Exp
-    | Clr    String Exp
-    | Neg    String Exp
-    | Not    String Exp
-    | Mul    String Exp Exp
-    | Div    String Exp Exp
-    | Mod    String Exp Exp
-    | Add    String Exp Exp
-    | Sub    String Exp Exp
-    | Shl    String Exp Exp
-    | Shr    String Exp Exp
-    | And    String Exp Exp
-    | Xor    String Exp Exp
-    | Or     String Exp Exp
-    | BChg   String Exp Exp
-    | BClr   String Exp Exp
-    | BSet   String Exp Exp
-    | BTst   String Exp Exp
-    | Cmp    String Exp Exp
-    | Test   String Exp
-    | Move   String Exp Exp
-    | Scc    String Exp Cond
-    deriving (Eq, Show)
-
-data Addr
-    = AsAddr  Exp
-    | PostInc Exp
-    | PostDec Exp
-    | PreInc  Exp
-    | PreDec  Exp
-    | Scaled  Exp Exp
+    | StrVal Bytes
+    | Deref  [Exp]
+    | Dot    Exp Name
+    | Inc    Sel Exp
+    | Dec    Sel Exp
+    | Clr    Sel Exp
+    | Neg    Sel Exp
+    | Not    Sel Exp
+    | Mul    Sel Exp Exp
+    | Div    Sel Exp Exp
+    | Mod    Sel Exp Exp
+    | Add    Sel Exp Exp
+    | Sub    Sel Exp Exp
+    | Shl    Sel Exp Exp
+    | Shr    Sel Exp Exp
+    | And    Sel Exp Exp
+    | Xor    Sel Exp Exp
+    | Or     Sel Exp Exp
+    | BChg   Sel Exp Exp
+    | BClr   Sel Exp Exp
+    | BSet   Sel Exp Exp
+    | BTst   Sel Exp Exp
+    | Cmp    Sel Exp Exp
+    | Test   Sel Exp
+    | Move   Sel Exp Exp
+    | Scc    Sel Exp Cond
     deriving (Eq, Show)
 
 data Cond
@@ -83,14 +81,6 @@ data Flag
     | (:-)  | (:!-)
     | (:%)  | (:!%)
     | (:^)  | (:!^)
-    | Flag String
+    | Flag Name
     deriving (Eq, Show)
-
-data Signedness
-    = Signed
-    | Unsigned
-    deriving (Eq, Show)
-
-defaultIntSize :: Int
-defaultIntSize = 32
 
