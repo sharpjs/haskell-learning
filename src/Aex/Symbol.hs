@@ -1,4 +1,6 @@
 {-
+    Symbol
+
     This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
     
@@ -16,14 +18,14 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Main where
+module Aex.Symbol where
 
-import Aex.Scope
 import Aex.Types
-import Aex.AST
+import Aex.Util
 
-main :: IO ()
-main = do
-    let n = i32 == f64
-    putStrLn $ "hello world " ++ show n
+data Symbol = Symbol
+    { name :: !Name
+    , typé :: !Type
+    }
+    deriving (Eq, Show)
 
