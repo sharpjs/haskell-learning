@@ -21,10 +21,20 @@
 module Aex.Util where
 
 import qualified Data.ByteString.Char8 as C
+import           Data.Monoid
 import           Data.Word
 
 type Bytes = C.ByteString
 type Name  = C.ByteString
 type Sel   = C.ByteString
 type Width = Word8
+
+-- | Maps an applicative-returning function over a traversable,
+-- |   returning the first non-Nothing value.
+findMapM :: (Traversable t, Applicative f)
+         => t a                 -- traversable
+         -> (a -> f (Maybe b))  -- predicate returning applicative result or Nothing
+         -> f (Maybe b)         -- applicative result
+
+findMapM t f = getFirst . foldMap First <$> traverse f t
 
