@@ -1,6 +1,6 @@
 # https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
 
-resolver: lts-3.16
+resolver: lts-3.18
 flags: {}
 packages:
 - '.'
