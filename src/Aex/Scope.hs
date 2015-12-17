@@ -18,34 +18,22 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Aex.Scope
-    (Scope, rootScope, subscope)
-    where
+module Aex.Scope where
 
---import Aex.AST
 import Aex.Symbol (Symbol)
-import Aex.Types
-import Aex.Util
---import Control.Monad.Reader
+import Aex.Types  (Type)
+import Aex.Util   (Name, findMapA)
 import Control.Monad.ST
---import Data.Hashable (Hashable)
---import Data.Monoid
 
-import qualified Aex.Symbol               as S
-import qualified Data.ByteString          as B
 import qualified Data.HashTable.Class     as H
 import qualified Data.HashTable.ST.Cuckoo as HC
 
-type Table s v = HC.HashTable s Name v
+newtype Table s v = Table (HC.HashTable s Name v)
+    deriving (Show)
 
 data Scope s = Scope
-    { symbols :: ScopeMap s Symbol
-    , types   :: ScopeMap s Type
-    } deriving (Show)
-
-data ScopeMap s t = ScopeMap
-    { table  :: Table s t
-    , parent :: Maybe (ScopeMap s t)
+    { symbols :: [Table s Symbol]
+    , types   :: [Table s Type]
     } deriving (Show)
 
 rootScope :: ST s (Scope s)
@@ -55,57 +43,33 @@ subscope :: Scope s -> ST s (Scope s)
 subscope = newScope . Just
 
 newScope :: Maybe (Scope s) -> ST s (Scope s)
-newScope p = do
-    sm <- newScopeMap  16 $ symbols <$> p
-    tm <- newScopeMap 128 $ types   <$> p
-    return Scope { symbols = sm, types = tm }
+newScope parent = do
+    st <- H.newSized  32 -- initial symbol capacity
+    tt <- H.newSized 128 -- initial type   capacity
+    return Scope
+        { symbols = Table st : maybe [] symbols parent
+        , types   = Table tt : maybe [] types   parent
+        }
 
-newScopeMap :: Int -> Maybe (ScopeMap s t) -> ST s (ScopeMap s t)
-newScopeMap s p = do
-    h <- H.newSized s
-    return ScopeMap { table = h, parent = p }
+resolve :: [Table s v] -> Name -> ST s (Maybe v)
+resolve ts name = findMapA find ts
+  where
+    find (Table t) = H.lookup t name
 
---define :: (Scope s -> Table s v) -> Name -> v -> Analyzer s ()
---define get name val = do
---    table <- asks $ get . head
---    found <- lift $ H.lookup table name
---    case found of
---        Nothing -> lift $ H.insert table name val
---        Just v' -> fail "already defined"
---
---resolve :: (Scope s -> Table s v) -> Name -> Analyzer s v
---resolve get name = do
---    tables <- asks $ fmap get
---    found  <- lift $ findMapM tables $ \t -> H.lookup t name
---    case found of
---        Nothing -> fail "not found" 
---        Just v  -> return v
+define :: [Table s v] -> Name -> v -> ST s (DefineResult v)
+define (Table t : ts) name v = do
+    found <- H.lookup t name
+    case found of
+        Just v  -> return $ Conflict v
+        Nothing -> do
+            H.insert t name v
+            found <- resolve ts name
+            return $ case found of
+                Just v  -> Shadowed v
+                Nothing -> Defined
 
--- TODO: Move this elsewhere?
---
---type Analyzer s = ReaderT [Scope s] (ST s)
---
---analyze :: Stmt -> ST s ()
---analyze s = rootScope >>= runReaderT (analyze' s)
---
----- TODO: Draw the rest of the owl.
---
---analyze' :: Stmt -> Analyzer s ()
---analyze' (TypeDef n t) = defineType n t
---analyze' _             = return ()
---
---defineType :: Name -> Type -> Analyzer s ()
---defineType name t = do
---    define types name t
---
---resolveType :: Name -> Analyzer s Type
---resolveType name = do
---    resolve types name
---
---defineSym :: Name -> Symbol -> Analyzer s ()
---defineSym name s = do
---    define symbols name s
---
---resolveSym :: Name -> Analyzer s Symbol
---resolveSym name = do
---    resolve symbols name
+data DefineResult v
+    = Defined
+    | Shadowed v
+    | Conflict v
+

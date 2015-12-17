@@ -31,10 +31,29 @@ type Width = Word8
 
 -- | Maps an applicative-returning function over a traversable,
 -- |   returning the first non-Nothing value.
-findMapM :: (Traversable t, Applicative f)
-         => t a                 -- traversable
-         -> (a -> f (Maybe b))  -- predicate returning applicative result or Nothing
+findMapA :: (Applicative f, Traversable t)
+         => (a -> f (Maybe b))  -- predicate returning applicative result or Nothing
+         -> t a                 -- traversable
          -> f (Maybe b)         -- applicative result
 
-findMapM t f = getFirst . foldMap First <$> traverse f t
+findMapA f t = getFirst . foldMap First <$> traverse f t
+
+-- getFirst . foldMap First
+--   :: Foldable t
+--   => t (Maybe a) -> Maybe a
+--
+-- traverse
+--   :: (Applicative f, Traversable t)
+--   => (a -> f b) -> t a -> f (t b)
+--
+-- so, given:
+--   f = ST s t
+--   t = [a]
+--   b = Maybe a
+--
+-- traverse f t
+--   :: (a -> ST s (Maybe a)) -> [a] -> ST s [Maybe a]
+--
+-- getFirst . foldMap First
+--   :: [Maybe a] -> Maybe a
 
