@@ -15,7 +15,8 @@ cabal-version:      >= 1.10
 executable aex
   hs-source-dirs:       src
   main-is:              Main.hs
-  other-modules:        Aex.AST
+  other-modules:        Aex.Asm
+                      , Aex.AST
                       , Aex.Scope
                       , Aex.Symbol
                       , Aex.Types

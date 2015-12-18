@@ -18,6 +18,7 @@
 
 module Main where
 
+import Aex.Asm
 import Aex.Scope
 import Aex.Types
 import Aex.AST
