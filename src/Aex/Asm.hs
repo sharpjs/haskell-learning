@@ -18,6 +18,7 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -29,35 +30,53 @@ import Data.ByteString.Builder
 import Data.Monoid
 import System.IO (Handle)
 
-newtype Asm a = Asm (State Builder a)
-  deriving (Functor, Applicative, Monad)
+--------------------------------------------------------------------------------
+-- An assembly output builder
 
-toBytes :: Asm a -> ByteString
-toBytes (Asm asm) = toLazyByteString . execState asm $ ""
+newtype Out a = Out (State Builder a)
+    deriving (Functor, Applicative, Monad)
 
-hPut :: Handle -> Asm a -> IO ()
-hPut h (Asm asm) = hPutBuilder h . execState asm $ ""
+toBytes :: Out a -> ByteString
+toBytes (Out asm) = toLazyByteString . execState asm $ ""
 
-write :: Builder -> Asm ()
-write b = Asm $ modify (<> b)
+hPut :: Handle -> Out a -> IO ()
+hPut h (Out asm) = hPutBuilder h . execState asm $ ""
 
-section :: ByteString -> Asm ()
-section t = write
-    $  ".section "
-    <> lazyByteString t
-    <> eol
+mute :: Out ()
+mute = Out $ return ()
 
-directive :: ByteString -> [ByteString] -> Asm ()
-directive op args = write
-    $  indent
-    <> lazyByteString op
-    <> " "
-    <> mconcat (lazyByteString <$> args)
-    <> eol
+write :: Builder -> Out ()
+write b = Out $ modify (<> b)
+
+writeCommaList :: [AnyShowAsm] -> Out ()
+writeCommaList []     = mute
+writeCommaList (a:as) = showAsm a >> write' as
+  where
+    write' (a:as) = write "," >> showAsm a >> write' as
+
+directive :: ByteString -> [AnyShowAsm] -> Out ()
+directive op args = do
+    write $ indent <> lazyByteString op
+    case args of
+        [] -> return ()
+        as -> write " " >> writeCommaList as
+    write eol
 
 indent :: Builder
 indent = "    "
 
 eol :: Builder
 eol = "\n"
+
+--------------------------------------------------------------------------------
+-- A Show class for assembly
+
+class ShowAsm a where
+    showAsm :: a -> Out ()
+
+data AnyShowAsm where
+    AnyShowAsm :: ShowAsm a => a -> AnyShowAsm
+
+instance ShowAsm AnyShowAsm where
+    showAsm (AnyShowAsm a) = showAsm a
 
