@@ -29,6 +29,9 @@ type Name  = C.ByteString
 type Sel   = C.ByteString
 type Width = Word8
 
+----------------------------------------------------------------------------------------------------
+-- findMapA
+
 -- | Maps an applicative-returning function over a traversable,
 -- |   returning the first non-Nothing value.
 findMapA :: (Applicative f, Traversable t)
