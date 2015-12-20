@@ -77,6 +77,26 @@ instance ShowAsm CtrlReg where
 
 newtype RegSet = RS Word16 deriving (Eq, Show)
 
+instance Monoid RegSet where
+    mempty                = RS $ 0
+    mappend (RS a) (RS b) = RS $ a .|. b
+
+class InRegSet r where
+    include :: r -> RegSet -> RegSet
+    infixl 5 <+
+    (<+) :: RegSet -> r -> RegSet
+    (<+) = flip include
+
+instance InRegSet DataReg where
+    include (D n) = include' 0x0001 n
+
+instance InRegSet AddrReg where
+    include (A n) = include' 0x0100 n
+
+include' :: (Integral a) => Word16 -> a -> RegSet -> RegSet
+include' base n =
+    (<>) . RS . shiftL base . fromIntegral $ n
+
 instance ShowAsm RegSet where
     showAsm (RS w) = foldJ $ datas ++ addrs
       where
@@ -105,7 +125,6 @@ select rs w = select' rs w 0 none
 
     group s Nothing  = showAsm s
     group s (Just e) = showAsm s <> "-" <> showAsm e
-
 
 --data Operand
 --    -- Immediate/Absolute
