@@ -26,6 +26,7 @@ module Aex.Targets.Mcf5307 where
 import Aex.Asm
 import Control.Monad.State.Lazy
 import Data.Bits
+import Data.Foldable (foldl')
 import Data.Int
 import Data.Monoid
 import Data.ByteString.Lazy (ByteString)
@@ -77,69 +78,33 @@ instance ShowAsm CtrlReg where
 newtype RegSet = RS Word16 deriving (Eq, Show)
 
 instance ShowAsm RegSet where
-    showAsm (RS w) = d <> a
-        where
-        (d, q) = showRegs (map AnyShowAsm dataRegs) (w .&. 0xFF) False
-        (a, _) = showRegs (map AnyShowAsm addrRegs) (shiftR w 8) q
+    showAsm (RS w) = foldJ $ datas ++ addrs
+      where
+        foldJ []     = mempty
+        foldJ (g:gs) = foldl' join g gs
+        join a b     = a <> charUtf8 '/' <> b
+        datas        = select dataRegs (w .&. 0xFF)
+        addrs        = select addrRegs (shiftR w 8)
 
-showRegs :: ShowAsm a => [a] -> Word16 -> Bool -> (Builder, Bool)
-showRegs rs bits join =
-    let s = execState (go 0 rs) initialState
-    in (_text s, _join s)
+select :: (ShowAsm a) => [a] -> Word16 -> [Builder]
+select rs w = select' rs w 0 none
   where
-    initialState = ShowRegs
-       { _bits  = bits
-       , _join  = join
-       , _text  = ""
-       , _first = Nothing
-       , _last  = Nothing
-       } 
+    none      = (Nothing, Nothing) :: (Maybe a, Maybe a)
+    single r  = (Just r,  Nothing)
+    range s e = (Just s,  Just e )
 
-    go :: (ShowAsm a) => Int -> [a] -> State (ShowRegs a) ()
-    go _ [] = do
-        f <- gets _first
-        case f of
-            Just _  -> modify append
-            Nothing -> return ()
-    go n (r:rs) = do
-        w <- gets _bits
-        f <- gets _first
-        case (testBit w n, f) of
-            (True,  Nothing) -> modify $ setFirst r
-            (True,  Just _ ) -> modify $ setLast  r
-            (False, Just _ ) -> modify $ append
-            _                -> return ()
-        go (n + 1) rs
+    select' []     _ _ (Nothing, _) = []
+    select' []     _ _ (Just s,  e) = [group s e]
+    select' (r:rs) w n (s,       e) =
+        let next rg = select' rs w (n + 1) rg
+        in case (s, testBit w n) of
+            (Nothing, False) -> next $ none
+            (Nothing, True ) -> next $ single r
+            (Just s,  True ) -> next $ range s r
+            (Just s,  False) -> group s e : next none
 
-    setFirst r s = s { _first = Just r }
-    setLast  r s = s { _last  = Just r }
-    append     s = s
-        { _text  = _text s
-            <> if _join s then "/" else ""
-            <> regs (_first s) (_last s)
-        , _join  = True
-        , _first = Nothing
-        , _last  = Nothing
-        }
-
-    regs Nothing  _        = ""
-    regs (Just s) Nothing  = showAsm s
-    regs (Just s) (Just e) = showAsm s <> "-" <> showAsm e
-
-data ShowRegs a = ShowRegs
-    { _bits  :: Word16
-    , _join  :: Bool
-    , _text  :: Builder
-    , _first :: Maybe a
-    , _last  :: Maybe a
-    }
-
--- (Builder, n = reg#, start = Nothing, join = false)
-
---    let x = [0..7] `map` ( n ->
---                            let has = n < 8 && testBit n bits
---                        )
---    in ""
+    group s Nothing  = showAsm s
+    group s (Just e) = showAsm s <> "-" <> showAsm e
 
 
 --data Operand
