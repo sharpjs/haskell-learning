@@ -19,6 +19,7 @@ executable aex
                       , Aex.AST
                       , Aex.Scope
                       , Aex.Symbol
+                      , Aex.Targets.Mcf5307
                       , Aex.Types
                       , Aex.Util
   build-depends:        base >= 4.7 && < 5

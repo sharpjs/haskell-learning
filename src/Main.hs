@@ -20,6 +20,7 @@ module Main where
 
 import Aex.Asm
 import Aex.Scope
+import Aex.Targets.Mcf5307
 import Aex.Types
 import Aex.AST
 

@@ -48,19 +48,18 @@ mute = Out $ return ()
 write :: Builder -> Out ()
 write b = Out $ modify (<> b)
 
-writeCommaList :: [AnyShowAsm] -> Out ()
-writeCommaList []     = mute
-writeCommaList (a:as) = showAsm a >> write' as
-  where
-    write' (a:as) = write "," >> showAsm a >> write' as
+commaList :: [AnyShowAsm] -> Builder
+commaList []     = ""
+commaList (a:as) = showAsm a <> mconcat (("," <>) . showAsm <$> as)
 
-directive :: ByteString -> [AnyShowAsm] -> Out ()
-directive op args = do
-    write $ indent <> lazyByteString op
-    case args of
-        [] -> return ()
-        as -> write " " >> writeCommaList as
-    write eol
+directive :: ByteString -> [AnyShowAsm] -> Builder
+directive op args
+    =  indent
+    <> lazyByteString op
+    <> case args of
+        [] -> ""
+        as -> " " <> commaList as
+    <> eol
 
 indent :: Builder
 indent = "    "
@@ -72,7 +71,7 @@ eol = "\n"
 -- A Show class for assembly
 
 class ShowAsm a where
-    showAsm :: a -> Out ()
+    showAsm :: a -> Builder
 
 data AnyShowAsm where
     AnyShowAsm :: ShowAsm a => a -> AnyShowAsm
