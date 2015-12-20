@@ -23,14 +23,6 @@ module Aex.Analysis where
 import Aex.AST
 import Control.Monad.ST
 
-scanDecls :: [Stmt] -> ST s ()
-scanDecls = foldl
-
-scanStmt (Block ss) = scanStmts ss
-scanStmt (Label n) = return ()
-scanStmt (Bss n t) = defineSym n t
-
 -- 1: collect defined names and their types
 -- 2: type check, const reduction, code gen
-
 
