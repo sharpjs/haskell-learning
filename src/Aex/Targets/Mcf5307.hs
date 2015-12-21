@@ -133,6 +133,10 @@ instance ToIndex DataReg where
 instance ToIndex AddrReg where
     toIndex = AddrIndex
 
+instance ShowAsm Index where
+    showAsm (DataIndex r) = showAsm r
+    showAsm (AddrIndex r) = showAsm r
+
 --------------------------------------------------------------------------------
 
 data Loc
@@ -158,6 +162,36 @@ data Loc
     | PcDispIdx             Exp Index Exp   -- at PC + displacement + index * scale
     deriving (Eq, Show)
 
+instance ShowAsm Loc where
+    showAsm (Imm   e)             = "#" <> showAsm e
+    showAsm (Abs16 e)             = showAsm e <> ":w"
+    showAsm (Abs32 e)             = showAsm e <> ":l"
+    showAsm (Data  r)             = showAsm r
+    showAsm (Addr  r)             = showAsm r
+    showAsm (Ctrl  r)             = showAsm r
+    showAsm (Regs  r)             = showAsm r
+    showAsm SR                    = "%sr"
+    showAsm CCR                   = "%ccr"
+    showAsm BC                    = "bc"
+    showAsm (AddrInd    r)        = "(" <> showAsm r <> ")"
+    showAsm (AddrIndInc r)        = "(" <> showAsm r <> ")+"
+    showAsm (AddrIndDec r)        = "-(" <> showAsm r <> ")"
+    showAsm (AddrDisp b d)        = showAsm d
+                                    <> charUtf8 '(' <> showAsm b
+                                    <> charUtf8 ')'
+    showAsm (AddrDispIdx b d i s) = showAsm d
+                                    <> charUtf8 '(' <> showAsm b
+                                    <> charUtf8 ',' <> showAsm i
+                                    <> charUtf8 '*' <> showAsm s
+                                    <> charUtf8 ')'
+    showAsm (PcDisp d)            = showAsm d
+                                    <> "(%pc)"
+    showAsm (PcDispIdx d i s)     = showAsm d
+                                    <> charUtf8 '(' <> "%pc"
+                                    <> charUtf8 ',' <> showAsm i
+                                    <> charUtf8 '*' <> showAsm s
+                                    <> charUtf8 ')'
+
 --------------------------------------------------------------------------------
 
 data Operand
@@ -166,6 +200,9 @@ data Operand
 
 infixl 9 @:
 (@:) = Operand
+
+instance ShowAsm Operand where
+    showAsm (Operand loc _) = showAsm loc
 
 --------------------------------------------------------------------------------
 

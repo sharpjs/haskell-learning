@@ -18,10 +18,15 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Aex.AST where
 
+import Aex.Asm (ShowAsm, showAsm)
 import Aex.Types
 import Aex.Util
+import Data.ByteString.Builder
+import Data.Monoid ((<>))
 
 data Stmt
     -- Meta
@@ -83,4 +88,31 @@ data Flag
     | (:^)  | (:!^)
     | Flag Name
     deriving (Eq, Show)
+
+instance ShowAsm Exp where
+    showAsm (ValRef n)  = byteString n
+    showAsm (IntVal v)  = "not implemented"
+    showAsm (StrVal v)  = "not implemented"
+    showAsm (Dot e n)   = showAsm e <> charUtf8 '+' <> byteString n
+    showAsm (Neg _ e)   = showAsm1 '-'  e
+    showAsm (Not _ e)   = showAsm1 '~'  e
+    showAsm (Mul _ l r) = showAsm2 "*"  l r
+    showAsm (Div _ l r) = showAsm2 "/"  l r
+    showAsm (Mod _ l r) = showAsm2 "%"  l r
+    showAsm (Add _ l r) = showAsm2 "+"  l r
+    showAsm (Sub _ l r) = showAsm2 "-"  l r
+    showAsm (Shl _ l r) = showAsm2 "<<" l r
+    showAsm (Shr _ l r) = showAsm2 ">>" l r
+    showAsm (And _ l r) = showAsm2 "&"  l r
+    showAsm (Xor _ l r) = showAsm2 "^"  l r
+    showAsm (Or  _ l r) = showAsm2 "|"  l r
+    showAsm _ = "not implemented"
+
+showAsm1 :: Char -> Exp -> Builder
+showAsm1 op e
+    = charUtf8 op <> showAsm e
+
+showAsm2 :: Builder -> Exp -> Exp -> Builder
+showAsm2 op l r
+    = charUtf8 '(' <> showAsm l <> op <> showAsm r <> charUtf8 ')'
 
