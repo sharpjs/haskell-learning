@@ -24,6 +24,8 @@
 module Aex.Targets.Mcf5307 where
 
 import Aex.Asm
+import Aex.AST (Exp)
+import Aex.Types (Type)
 import Control.Monad.State.Lazy
 import Data.Bits
 import Data.Foldable (foldl')
@@ -115,36 +117,58 @@ select rs w = select' rs w 0 none
     group s Nothing  = showAsm s
     group s (Just e) = showAsm s <> "-" <> showAsm e
 
---data Operand
---    -- Immediate/Absolute
---    = Imm           Const
---    | Abs16         Const
---    | Abs32         Const
---    -- Direct
---    | Data          DataReg
---    | Addr          AddrReg
---    | Ctrl          CtrlReg
---    | Misc          MiscReg
---    | Regs          [DataReg] [AddrReg]
---    -- Indirect
---    | AddrInd       AddrReg
---    | AddrIndInc    AddrReg
---    | AddrIndDec    AddrReg
---    | AddrDisp      AddrReg Const
---    | AddrDispIdx   AddrReg Const Index
---    | PcDisp                Const
---    | PcDispIdx             Const Index
---    deriving (Eq, Show)
---
---data MiscReg
---    = PC | SR | CCR | BC
---    deriving (Eq, Show)
---
---data Index
---    = DataIdx DataReg
---    | AddrIdx AddrReg
---    deriving (Eq, Show)
---
+--------------------------------------------------------------------------------
+
+data Index
+    = DataIndex DataReg
+    | AddrIndex AddrReg
+    deriving (Eq, Show)
+
+class ToIndex r where
+    toIndex :: r -> Index
+
+instance ToIndex DataReg where
+    toIndex = DataIndex
+
+instance ToIndex AddrReg where
+    toIndex = AddrIndex
+
+--------------------------------------------------------------------------------
+
+data Loc
+    -- Immediate/Absolute
+    = Imm           Exp                     -- immediate
+    | Abs16         Exp                     -- absolute, 16-bit signed
+    | Abs32         Exp                     -- absolute, 32-bit unsigned
+    -- Direct
+    | Data          DataReg                 -- data register
+    | Addr          AddrReg                 -- address register
+    | Ctrl          CtrlReg                 -- control register
+    | Regs          RegSet                  -- register set for movem
+    | SR                                    -- status register
+    | CCR                                   -- condition code register
+    | BC                                    -- both caches
+    -- Indirect
+    | AddrInd       AddrReg                 -- at addr reg
+    | AddrIndInc    AddrReg                 -- at addr reg, post-increment
+    | AddrIndDec    AddrReg                 -- at addr reg, pre-decrement
+    | AddrDisp      AddrReg Exp             -- at base + displacement
+    | AddrDispIdx   AddrReg Exp Index Exp   -- at base + displacement + index * scale
+    | PcDisp                Exp             -- at PC + displacement
+    | PcDispIdx             Exp Index Exp   -- at PC + displacement + index * scale
+    deriving (Eq, Show)
+
+--------------------------------------------------------------------------------
+
+data Operand
+    = Operand Loc Type
+    deriving (Eq, Show)
+
+infixl 9 @:
+(@:) = Operand
+
+--------------------------------------------------------------------------------
+
 --data Sel
 --    = Best  -- auto-select best variant
 --    | UseG  -- force variant: general (no suffix)
