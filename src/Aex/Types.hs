@@ -109,16 +109,3 @@ returns :: Type -> [Member]
 returns (FuncT _ rs) = rs
 returns _            = []
 
--- inhabits :: Type -> Value -> Bool
--- inhabits (IntT   w _ s) (IntV   v) = (minInteger w s) <= v && v <= (maxInteger w s)
--- inhabits (FloatT w _  ) (FloatV v) = True
--- inhabits _              _          = False
--- 
--- data Value
---     = IntV   Integer
---     | FloatV Double
---     deriving (Eq, Show)
--- 
--- class    ToValue a       where toValue :: a -> Value
--- instance ToValue Integer where toValue = IntV
--- instance ToValue Double  where toValue = FloatV
