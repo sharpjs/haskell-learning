@@ -58,12 +58,8 @@ data CtrlReg
     = VBR | CACR | ACR0 | ACR1 | MBAR | RAMBAR
     deriving (Eq, Show)
 
-vbr    = VBR
-cacr   = CACR
-acr0   = ACR0
-acr1   = ACR1
-mbar   = MBAR
-rambar = RAMBAR
+ctrlRegs @ [vbr, cacr, acr0, acr1, mbar, rambar]
+         = [VBR, CACR, ACR0, ACR1, MBAR, RAMBAR]
 
 instance ShowAsm CtrlReg where
     showAsm VBR    = "%vbr"
@@ -81,21 +77,14 @@ instance Monoid RegSet where
     mempty                = RS $ 0
     mappend (RS a) (RS b) = RS $ a .|. b
 
-class InRegSet r where
-    include :: r -> RegSet -> RegSet
-    infixl 5 <+
-    (<+) :: RegSet -> r -> RegSet
-    (<+) = flip include
+class ToRegSet r where
+    toRegSet :: r -> RegSet
 
-instance InRegSet DataReg where
-    include (D n) = include' 0x0001 n
+instance ToRegSet DataReg where
+    toRegSet (D n) = RS . shiftL 0x0001 . fromIntegral $ n
 
-instance InRegSet AddrReg where
-    include (A n) = include' 0x0100 n
-
-include' :: (Integral a) => Word16 -> a -> RegSet -> RegSet
-include' base n =
-    (<>) . RS . shiftL base . fromIntegral $ n
+instance ToRegSet AddrReg where
+    toRegSet (A n) = RS . shiftL 0x0100 . fromIntegral $ n
 
 instance ShowAsm RegSet where
     showAsm (RS w) = foldJ $ datas ++ addrs
@@ -103,8 +92,8 @@ instance ShowAsm RegSet where
         foldJ []     = mempty
         foldJ (g:gs) = foldl' join g gs
         join a b     = a <> charUtf8 '/' <> b
-        datas        = select dataRegs (w .&. 0xFF)
-        addrs        = select addrRegs (shiftR w 8)
+        datas        = select dataRegs $ w
+        addrs        = select addrRegs $ w `shiftR` 8
 
 select :: (ShowAsm a) => [a] -> Word16 -> [Builder]
 select rs w = select' rs w 0 none
