@@ -25,8 +25,13 @@ module Aex.AST where
 import Aex.Asm (ShowAsm, showAsm)
 import Aex.Types
 import Aex.Util
+import Data.ByteString.Char8 (ByteString)
 import Data.ByteString.Builder
 import Data.Monoid ((<>))
+import Data.Word
+import Numeric (showOct)
+
+import qualified Data.ByteString.Char8 as B
 
 data Stmt
     -- Meta
@@ -91,8 +96,8 @@ data Flag
 
 instance ShowAsm Exp where
     showAsm (ValRef n)  = byteString n
-    showAsm (IntVal v)  = "not implemented"
-    showAsm (StrVal v)  = "not implemented"
+    showAsm (IntVal v)  = asmInt v
+    showAsm (StrVal v)  = asmStr v
     showAsm (Dot e n)   = showAsm e <> charUtf8 '+' <> byteString n
     showAsm (Neg _ e)   = showAsm1 '-'  e
     showAsm (Not _ e)   = showAsm1 '~'  e
@@ -114,5 +119,35 @@ showAsm1 op e
 
 showAsm2 :: Builder -> Exp -> Exp -> Builder
 showAsm2 op l r
-    = charUtf8 '(' <> showAsm l <> op <> showAsm r <> charUtf8 ')'
+    = char8 '(' <> showAsm l <> op <> showAsm r <> char8 ')'
+
+asmInt :: Integer -> Builder
+asmInt n
+    | hexable n = word64Hex . fromIntegral $ n
+    | otherwise = integerDec n
+
+hexable :: Integer -> Bool
+hexable n =
+    n > 9 && n <= fromIntegral (maxBound :: Word64)
+
+asmStr :: ByteString -> Builder
+asmStr s =
+    let q = char8 '"'
+    in B.foldl' (flip $ mappend . asmCharUtf8) q s <> q
+
+asmCharUtf8 :: Char -> Builder
+asmCharUtf8 '\b' = "\\b"
+asmCharUtf8 '\f' = "\\f"
+asmCharUtf8 '\n' = "\\n"
+asmCharUtf8 '\r' = "\\r"
+asmCharUtf8 '\t' = "\\t"
+asmCharUtf8 '\"' = "\\\""
+asmCharUtf8 '\\' = "\\\\"
+asmCharUtf8 c
+    | '\x20' <= c && c <= '\x7E' = char8   c
+    | otherwise                  = escChar c
+  where
+    escChar c = foldMap escByte . encodeUtf8 $ c
+    escByte b = mappend backslash . string8 . show . showOct b $ ""
+    backslash = char8 '\\'
 
