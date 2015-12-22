@@ -20,17 +20,20 @@
 
 module Aex.Util where
 
+import Data.Bits ((.&.), shiftR)
+import Data.Char (ord)
+import Data.Monoid
+import Data.Word
+
 import qualified Data.ByteString.Char8 as C
-import           Data.Monoid
-import           Data.Word
 
 type Bytes = C.ByteString
 type Name  = C.ByteString
 type Sel   = C.ByteString
 type Width = Word8
+type Byte  = Word8
 
 ----------------------------------------------------------------------------------------------------
--- findMapA
 
 -- | Maps an applicative-returning function over a traversable,
 -- |   returning the first non-Nothing value.
@@ -59,4 +62,24 @@ findMapA f t = getFirst . foldMap First <$> traverse f t
 --
 -- getFirst . foldMap First
 --   :: [Maybe a] -> Maybe a
+
+----------------------------------------------------------------------------------------------------
+
+encodeUtf8 :: Char -> [Byte]
+encodeUtf8 = map fromIntegral . encode . ord
+  where
+    encode c
+        | c <= 0x007F = [ c ]
+        | c <= 0x07FF = [ 0xC0 + c `shiftR`  6
+                        , 0x80 + c             .&. 0x3F
+                        ]
+        | c <= 0xFFFF = [ 0xE0 + c `shiftR` 12
+                        , 0x80 + c `shiftR`  6 .&. 0x3F
+                        , 0x80 + c             .&. 0x3F
+                        ]
+        | otherwise   = [ 0xF0 + c `shiftR` 18
+                        , 0x80 + c `shiftR` 12 .&. 0x3F
+                        , 0x80 + c `shiftR`  6 .&. 0x3F
+                        , 0x80 + c             .&. 0x3F
+                        ]
 
