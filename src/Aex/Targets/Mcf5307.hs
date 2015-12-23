@@ -206,77 +206,56 @@ instance ShowAsm Operand where
 
 --------------------------------------------------------------------------------
 
---data Sel
---    = Best  -- auto-select best variant
---    | UseG  -- force variant: general (no suffix)
---    | UseA  -- force variant: address
---    | UseI  -- force variant: immediate
---    | UseQ  -- force variant: quick
---    | UseX  -- force variant: extended
---
---newtype OperandSet
---    = OS Word8
---    deriving (Eq, Show)
---
---instance Monoid OperandSet where
---    mempty                = _none
---    mappend (OS a) (OS b) = OS $ a .|. b
---
---member :: Operand -> OperandSet -> Bool
---member o (OS a) =
---    let (OS b) = toSet o
---    in  a .&. b /= 0
---
---except :: OperandSet -> OperandSet -> OperandSet
---except (OS a) (OS b) =
---    OS $ a .&. complement b
---
---infix 4 <>?
---(<>?) = member
---
---infix 5 \\
---(\\) = except
---
---_none         = OS $ 0
---_imm          = OS $ bit  0
---_abs16        = OS $ bit  1
---_abs32        = OS $ bit  2
---_data         = OS $ bit  3
---_addr         = OS $ bit  4
---_ctrl         = OS $ bit  5
---_pc           = OS $ bit  6
---_sr           = OS $ bit  7
---_ccr          = OS $ bit  8
---_bc           = OS $ bit  9
---_regs         = OS $ bit 10
---_addrInd      = OS $ bit 11
---_addrIndInc   = OS $ bit 12
---_addrIndDec   = OS $ bit 13
---_addrDisp     = OS $ bit 14
---_addrDispIdx  = OS $ bit 15
---_pcDisp       = OS $ bit 16
---_pcDispIdx    = OS $ bit 17
---
---toSet :: Operand -> OperandSet
---toSet (Imm         _    ) = _imm
---toSet (Abs16       _    ) = _abs16
---toSet (Abs32       _    ) = _abs32
---toSet (Data        _    ) = _data
---toSet (Addr        _    ) = _addr
---toSet (Ctrl        _    ) = _ctrl
---toSet (Misc PC          ) = _pc
---toSet (Misc SR          ) = _sr
---toSet (Misc CCR         ) = _ccr
---toSet (Misc BC          ) = _bc
---toSet (Regs        _ _  ) = _regs
---toSet (AddrInd     _    ) = _addrInd
---toSet (AddrIndInc  _    ) = _addrIndInc
---toSet (AddrIndDec  _    ) = _addrIndDec
---toSet (AddrDisp    _ _  ) = _addrDisp
---toSet (AddrDispIdx _ _ _) = _addrDispIdx
---toSet (PcDisp        _  ) = _pcDisp
---toSet (PcDispIdx     _ _) = _pcDispIdx
---
+newtype Modes
+    = M Word8
+    deriving (Eq, Show)
+
+instance Monoid Modes where
+    mempty              = _none
+    mappend (M a) (M b) = M $ a .|. b
+
+infix 4 <>?
+(<>?) :: Loc -> Modes -> Bool
+loc <>? M a = a .&. b /= 0 where M b = mode loc
+
+_none         = M $ 0
+_imm          = M $ bit  0
+_abs16        = M $ bit  1
+_abs32        = M $ bit  2
+_data         = M $ bit  3
+_addr         = M $ bit  4
+_ctrl         = M $ bit  5
+_sr           = M $ bit  6
+_ccr          = M $ bit  7
+_bc           = M $ bit  8
+_regs         = M $ bit  9
+_addrInd      = M $ bit 10
+_addrIndInc   = M $ bit 11
+_addrIndDec   = M $ bit 12
+_addrDisp     = M $ bit 13
+_addrDispIdx  = M $ bit 14
+_pcDisp       = M $ bit 15
+_pcDispIdx    = M $ bit 16
+
+mode :: Loc -> Modes
+mode (Imm         _      ) = _imm
+mode (Abs16       _      ) = _abs16
+mode (Abs32       _      ) = _abs32
+mode (Data        _      ) = _data
+mode (Addr        _      ) = _addr
+mode (Ctrl        _      ) = _ctrl
+mode (SR                 ) = _sr
+mode (CCR                ) = _ccr
+mode (BC                 ) = _bc
+mode (Regs        _      ) = _regs
+mode (AddrInd     _      ) = _addrInd
+mode (AddrIndInc  _      ) = _addrIndInc
+mode (AddrIndDec  _      ) = _addrIndDec
+mode (AddrDisp    _ _    ) = _addrDisp
+mode (AddrDispIdx _ _ _ _) = _addrDispIdx
+mode (PcDisp        _    ) = _pcDisp
+mode (PcDispIdx     _ _ _) = _pcDispIdx
+
 --_abs    =  _abs16 <> _abs32
 --_reg    =  _data  <> _addr
 --_dst    =  _reg   <> _dstInd <> _abs
@@ -296,6 +275,14 @@ instance ShowAsm Operand where
 --
 ----isSrc :: Operand -> Bool
 ----isSrc (Data _) = True
+--
+--data Sel
+--    = Best  -- auto-select best variant
+--    | UseG  -- force variant: general (no suffix)
+--    | UseA  -- force variant: address
+--    | UseI  -- force variant: immediate
+--    | UseQ  -- force variant: quick
+--    | UseX  -- force variant: extended
 --
 --add :: Sel -> Ins2
 --add Best = add_
