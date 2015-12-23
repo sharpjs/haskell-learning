@@ -19,10 +19,11 @@
 module Main where
 
 import Aex.Asm
+import Aex.AST
 import Aex.Scope
 import Aex.Targets.Mcf5307
 import Aex.Types
-import Aex.AST
+import Aex.Util.BitSet
 
 main :: IO ()
 main = do

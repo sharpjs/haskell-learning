@@ -83,28 +83,3 @@ encodeUtf8 = map fromIntegral . encode . ord
                         , 0x80 + c             .&. 0x3F
                         ]
 
-----------------------------------------------------------------------------------------------------
-
-newtype Bits a => BitSet a
-    = BitSet a
-    deriving (Eq, Show)
-
-instance Bits a => Monoid (BitSet a) where
-    mempty  = empty
-    mappend = merge
-
-empty :: Bits a => BitSet a
-empty = BitSet zeroBits
-
-merge :: Bits a => BitSet a -> BitSet a -> BitSet a
-merge (BitSet a) (BitSet b) = BitSet $ a .|. b
-
-singleton :: Bits a => Int -> BitSet a
-singleton n = BitSet $ bit n
-
-include :: Bits a => Int -> BitSet a -> BitSet a
-include n (BitSet v) = BitSet $ v `setBit` n
-
-exclude :: Bits a => Int -> BitSet a -> BitSet a
-exclude n (BitSet v) = BitSet $ v `clearBit` n
-
