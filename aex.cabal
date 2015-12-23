@@ -12,10 +12,9 @@ category:           Compiler
 build-type:         Simple
 cabal-version:      >= 1.10
 
-executable aex
+library
   hs-source-dirs:       src
-  main-is:              Main.hs
-  other-modules:        Aex.Asm
+  exposed-modules:      Aex.Asm
                       , Aex.AST
                       , Aex.Scope
                       , Aex.Symbol
@@ -29,4 +28,18 @@ executable aex
                       , hashtables
                       , mtl
   default-language:     Haskell2010
+
+executable aex
+  hs-source-dirs:       app
+  main-is:              Main.hs
+  build-depends:        base, aex
+  default-language:     Haskell2010
+
+test-suite aex-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base, aex, hspec
+  default-language:    Haskell2010
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
 
