@@ -73,7 +73,9 @@ instance ShowAsm CtrlReg where
 
 --------------------------------------------------------------------------------
 
-newtype RegSet = RS Word16 deriving (Eq, Show)
+newtype RegSet
+    = RS Word16
+    deriving (Eq, Show)
 
 instance Monoid RegSet where
     mempty                = RS $ 0
@@ -173,24 +175,20 @@ instance ShowAsm Loc where
     showAsm SR                    = "%sr"
     showAsm CCR                   = "%ccr"
     showAsm BC                    = "bc"
-    showAsm (AddrInd    r)        = "(" <> showAsm r <> ")"
-    showAsm (AddrIndInc r)        = "(" <> showAsm r <> ")+"
+    showAsm (AddrInd    r)        =  "(" <> showAsm r <> ")"
+    showAsm (AddrIndInc r)        =  "(" <> showAsm r <> ")+"
     showAsm (AddrIndDec r)        = "-(" <> showAsm r <> ")"
-    showAsm (AddrDisp b d)        = showAsm d
-                                    <> charUtf8 '(' <> showAsm b
-                                    <> charUtf8 ')'
-    showAsm (AddrDispIdx b d i s) = showAsm d
-                                    <> charUtf8 '(' <> showAsm b
-                                    <> charUtf8 ',' <> showAsm i
-                                    <> charUtf8 '*' <> showAsm s
-                                    <> charUtf8 ')'
-    showAsm (PcDisp d)            = showAsm d
-                                    <> "(%pc)"
-    showAsm (PcDispIdx d i s)     = showAsm d
-                                    <> charUtf8 '(' <> "%pc"
-                                    <> charUtf8 ',' <> showAsm i
-                                    <> charUtf8 '*' <> showAsm s
-                                    <> charUtf8 ')'
+    showAsm (AddrDisp b d)        = showAsm d <> "(" <> showAsm b
+                                              <> ")"
+    showAsm (AddrDispIdx b d i s) = showAsm d <> "(" <> showAsm b
+                                              <> "," <> showAsm i
+                                              <> "*" <> showAsm s
+                                              <> ")"
+    showAsm (PcDisp d)            = showAsm d <> "(%pc)"
+    showAsm (PcDispIdx d i s)     = showAsm d <> "(%pc"
+                                              <> "," <> showAsm i
+                                              <> "*" <> showAsm s
+                                              <> ")"
 
 --------------------------------------------------------------------------------
 
