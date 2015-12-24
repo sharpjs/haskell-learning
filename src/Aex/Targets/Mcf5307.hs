@@ -25,7 +25,7 @@
 module Aex.Targets.Mcf5307 where
 
 import Aex.Asm
-import Aex.AST (Exp)
+import Aex.AST hiding (Data)
 import Aex.Types (Type)
 import Control.Monad.State.Lazy
 import Data.Bits
@@ -204,6 +204,10 @@ infixl 9 @:
 instance ShowAsm Operand where
     showAsm (Operand loc _) = showAsm loc
 
+isQ :: Operand -> Bool
+isQ (Operand (Imm (IntVal i)) _) = 1 <= i && i <= 8
+isQ _                            = False
+
 --------------------------------------------------------------------------------
 
 newtype Modes
@@ -272,26 +276,24 @@ _pcRel  = _pcDisp <> _pcDispIdx
 
 --------------------------------------------------------------------------------
 
+-- Instructions of arity N = 0 to 3
 --type Ins0 = Asm Operand
 --type Ins1 = Operand -> Asm Operand
 --type Ins2 = Operand -> Operand -> Asm Operand
 --type Ins3 = Operand -> Operand -> Operand -> Asm Operand
---
---isQ :: Operand -> Bool
---isQ (Imm (Const i)) = 1 <= i && i <= 8
---isQ _               = False
---
-----isSrc :: Operand -> Bool
-----isSrc (Data _) = True
---
---data Sel
---    = Best  -- auto-select best variant
---    | UseG  -- force variant: general (no suffix)
---    | UseA  -- force variant: address
---    | UseI  -- force variant: immediate
---    | UseQ  -- force variant: quick
---    | UseX  -- force variant: extended
---
+
+--------------------------------------------------------------------------------
+
+data Sel
+    = Best  -- auto-select best variant
+    | UseG  -- force variant: general (no suffix)
+    | UseA  -- force variant: address
+    | UseI  -- force variant: immediate
+    | UseQ  -- force variant: quick
+    | UseX  -- force variant: extended
+
+--------------------------------------------------------------------------------
+
 --add :: Sel -> Ins2
 --add Best = add_
 --add UseA = adda
