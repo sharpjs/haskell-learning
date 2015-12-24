@@ -18,8 +18,9 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Aex.Targets.Mcf5307 where
 
@@ -35,6 +36,7 @@ import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Builder
 import Data.Word
 
+import qualified Aex.Util.BitSet       as S
 import qualified Data.ByteString.Char8 as C
 
 --------------------------------------------------------------------------------
@@ -205,35 +207,17 @@ instance ShowAsm Operand where
 --------------------------------------------------------------------------------
 
 newtype Modes
-    = M Word8
-    deriving (Eq, Show)
-
-instance Monoid Modes where
-    mempty              = _none
-    mappend (M a) (M b) = M $ a .|. b
+    = Modes (S.BitSet Word8)
+    deriving (Eq, Show, Monoid)
 
 infix 4 <>?
 (<>?) :: Loc -> Modes -> Bool
-loc <>? M a = a .&. b /= 0 where M b = mode loc
+loc <>? Modes b = a `S.hasAnyOf` b
+  where Modes a = mode loc
 
-_none         = M $ 0
-_imm          = M $ bit  0
-_abs16        = M $ bit  1
-_abs32        = M $ bit  2
-_data         = M $ bit  3
-_addr         = M $ bit  4
-_ctrl         = M $ bit  5
-_sr           = M $ bit  6
-_ccr          = M $ bit  7
-_bc           = M $ bit  8
-_regs         = M $ bit  9
-_addrInd      = M $ bit 10
-_addrIndInc   = M $ bit 11
-_addrIndDec   = M $ bit 12
-_addrDisp     = M $ bit 13
-_addrDispIdx  = M $ bit 14
-_pcDisp       = M $ bit 15
-_pcDispIdx    = M $ bit 16
+infixl 9 \\
+(\\) :: Modes -> Modes -> Modes
+Modes a \\ Modes b = Modes $ a `S.difference` b
 
 mode :: Loc -> Modes
 mode (Imm         _      ) = _imm
@@ -254,14 +238,40 @@ mode (AddrDispIdx _ _ _ _) = _addrDispIdx
 mode (PcDisp        _    ) = _pcDisp
 mode (PcDispIdx     _ _ _) = _pcDispIdx
 
---_abs    =  _abs16 <> _abs32
---_reg    =  _data  <> _addr
---_dst    =  _reg   <> _dstInd <> _abs
---_src    =  _reg   <> _srcInd <> _abs <> _imm
---
---_dstInd =  _addrInd <> _addrIndInc <> _addrIndDec <> _addrDisp <> _addrDispIdx
---_srcInd =   _dstInd                               <>   _pcDisp <>   _pcDispIdx
---
+-- Singleton mode sets
+_none         = Modes $ S.empty
+_imm          = Modes $ S.singleton  0
+_abs16        = Modes $ S.singleton  1
+_abs32        = Modes $ S.singleton  2
+_data         = Modes $ S.singleton  3
+_addr         = Modes $ S.singleton  4
+_ctrl         = Modes $ S.singleton  5
+_sr           = Modes $ S.singleton  6
+_ccr          = Modes $ S.singleton  7
+_bc           = Modes $ S.singleton  8
+_regs         = Modes $ S.singleton  9
+_addrInd      = Modes $ S.singleton 10
+_addrIndInc   = Modes $ S.singleton 11
+_addrIndDec   = Modes $ S.singleton 12
+_addrDisp     = Modes $ S.singleton 13
+_addrDispIdx  = Modes $ S.singleton 14
+_pcDisp       = Modes $ S.singleton 15
+_pcDispIdx    = Modes $ S.singleton 16
+
+-- Compound mode sets
+_src    = _reg <> _srcMem <> _imm
+_dst    = _reg <> _dstMem
+
+_srcMem = _abs <> _arRel <> _pcRel
+_dstMem = _abs <> _arRel
+
+_reg    = _data <> _addr
+_abs    = _abs16 <> _abs32
+_arRel  = _addrInd <> _addrIndInc <> _addrIndDec <> _addrDisp <> _addrDispIdx
+_pcRel  = _pcDisp <> _pcDispIdx
+
+--------------------------------------------------------------------------------
+
 --type Ins0 = Asm Operand
 --type Ins1 = Operand -> Asm Operand
 --type Ins2 = Operand -> Operand -> Asm Operand
