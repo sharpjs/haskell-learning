@@ -29,7 +29,7 @@ import Aex.Util
 spec :: Spec
 spec = do
   describe "findMapA" $ do
-    it "returns wrapped Nothing if the traversable is empty" $ do
+    it "returns pure Nothing if the traversable is empty" $ do
       findMapA (\a -> [Just 0]) "" `shouldBe` [Nothing]
 
 --    it "is idempotent" $ property $
