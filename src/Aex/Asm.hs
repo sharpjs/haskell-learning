@@ -21,14 +21,47 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Aex.Asm where
 
-import Control.Monad.State.Lazy
+import Aex.Scope
+
+import Control.Monad.Reader
+import Control.Monad.ST
+import Control.Monad.State
+import Control.Monad.Writer
 import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Builder
 import Data.Monoid
+import Data.STRef
 import System.IO (Handle)
+
+--------------------------------------------------------------------------------
+
+newtype Asm a = Asm (forall s. AsmWriter s a)
+
+type AsmWriter s = WriterT Builder (AsmReader s)
+
+type AsmReader s = ReaderT (STRef s (Scope s)) (ST s)
+
+asm :: Asm () -> ByteString
+asm (Asm a) = runST $ do
+    root'   <- rootScope
+    root    <- newSTRef root'
+    builder <- runReaderT (execWriterT a) root
+    return . toLazyByteString $ builder
+
+instance Functor Asm where
+    f `fmap` Asm a = Asm $ fmap f a
+
+instance Applicative Asm where
+    pure a          = Asm $ pure a
+    Asm a <*> Asm b = Asm $ a <*> b
+
+instance Monad Asm where
+    return      = pure
+    Asm a >>= f = Asm $ a >>= \x -> (case f x of Asm b -> b)
 
 --------------------------------------------------------------------------------
 -- An assembly output builder
