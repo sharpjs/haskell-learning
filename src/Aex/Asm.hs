@@ -45,7 +45,7 @@ type AsmWriter s = WriterT Builder (AsmReader s)
 
 type AsmReader s = ReaderT (STRef s (Scope s)) (ST s)
 
-asm :: Asm () -> ByteString
+asm :: Asm a -> ByteString
 asm (Asm a) = runST $ do
     root'   <- rootScope
     root    <- newSTRef root'
@@ -63,42 +63,34 @@ instance Monad Asm where
     return      = pure
     Asm a >>= f = Asm $ a >>= \x -> (case f x of Asm b -> b)
 
---------------------------------------------------------------------------------
--- An assembly output builder
+raw :: Builder -> Asm ()
+raw s = Asm $ tell s
 
-newtype Out a = Out (State Builder a)
-    deriving (Functor, Applicative, Monad)
+rawCh :: Char -> Asm ()
+rawCh c = raw $ char8 c
 
-toBytes :: Out a -> ByteString
-toBytes (Out asm) = toLazyByteString . execState asm $ ""
+rawLn :: Builder -> Asm ()
+rawLn s = raw s >> eol
 
-hPut :: Handle -> Out a -> IO ()
-hPut h (Out asm) = hPutBuilder h . execState asm $ ""
+indent :: Asm ()
+indent = raw "    "
 
-mute :: Out ()
-mute = Out $ return ()
+eol :: Asm ()
+eol = rawCh '\n'
 
-write :: Builder -> Out ()
-write b = Out $ modify (<> b)
+directive :: ByteString -> [AnyShowAsm] -> Asm ()
+directive op args = do
+    indent
+    raw $ lazyByteString op
+    case args of
+        [] -> return ()
+        as -> rawCh ' ' >> commaList as
+    eol
 
-commaList :: [AnyShowAsm] -> Builder
-commaList []     = ""
-commaList (a:as) = showAsm a <> mconcat (("," <>) . showAsm <$> as)
-
-directive :: ByteString -> [AnyShowAsm] -> Builder
-directive op args
-    =  indent
-    <> lazyByteString op
-    <> case args of
-        [] -> ""
-        as -> " " <> commaList as
-    <> eol
-
-indent :: Builder
-indent = "    "
-
-eol :: Builder
-eol = "\n"
+commaList :: [AnyShowAsm] -> Asm ()
+commaList []     = return ()
+commaList (a:as) = rawLn $
+    showAsm a <> mconcat (("," <>) . showAsm <$> as)
 
 --------------------------------------------------------------------------------
 -- A Show class for assembly
