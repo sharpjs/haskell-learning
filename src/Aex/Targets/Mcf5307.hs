@@ -26,11 +26,12 @@ module Aex.Targets.Mcf5307 where
 
 import Aex.Asm
 import Aex.AST hiding (Data)
-import Aex.Types (Type)
+import Aex.Types
 import Control.Monad.State.Lazy
 import Data.Bits
 import Data.Foldable (foldl')
 import Data.Int
+import Data.Maybe
 import Data.Monoid
 import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Builder
@@ -277,10 +278,10 @@ _pcRel  = _pcDisp <> _pcDispIdx
 --------------------------------------------------------------------------------
 
 -- Instructions of arity N = 0 to 3
---type Ins0 = Asm Operand
---type Ins1 = Operand -> Asm Operand
---type Ins2 = Operand -> Operand -> Asm Operand
---type Ins3 = Operand -> Operand -> Operand -> Asm Operand
+type Ins0 = Asm Operand
+type Ins1 = Operand -> Asm Operand
+type Ins2 = Operand -> Operand -> Asm Operand
+type Ins3 = Operand -> Operand -> Operand -> Asm Operand
 
 --------------------------------------------------------------------------------
 
@@ -301,7 +302,19 @@ data Sel
 --add UseI = addi
 --add UseQ = addq
 --add UseX = addx
---
+
+addConst :: Ins2
+addConst !x@(Operand (Imm xe) xt) !y@(Operand (Imm ye) yt) =
+    go (eqScalarType xt yt) xe ye
+  where
+    go Nothing _ _
+        = fail "type mismatch"
+    go (Just t) (IntVal xv) (IntVal yv)
+        = let v = xv + yv
+          in return $ Operand (Imm $ IntVal v) t
+
+addConst _ _ = fail "only can add two immediates"
+
 --add_ :: Ins2
 --add_ !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
 --add_ !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
@@ -309,11 +322,27 @@ data Sel
 --add_ !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
 --add_ !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
 --add_ !d          !s                              = err2 "add"  d s
---
---addg :: Ins2
---addg !d@(Data _) !s          | s <>? _src        = ins2 "add"  d s
---addg !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
---
+
+addg :: Ins2
+addg !s@(Operand sl st) !d@(Operand dl dt)
+    | sl <>? _src,  dl <>? _data = ok
+    | sl <>? _data, dl <>? _dst  = ok
+    | otherwise                  = fail "mode mismatch"
+  where
+    ok = do
+        case eqScalarType st dt of
+            Nothing -> fail "type mismatch"
+            Just t  -> directive "add" (t, sl, dl)
+        return d
+
+eqScalarType :: Type -> Type -> Maybe Type
+eqScalarType a@(IntT a') b@(IntT b')
+    | a' == b'     = Just a  -- Types specify integers identically
+    | isNothing b' = Just a  -- \_ One or both types are universal
+    | isNothing a' = Just b  -- /
+    | otherwise    = Nothing -- Types specify different integers
+eqScalarType _ _ = Nothing   -- Arent' both integer types
+
 --adda :: Ins2
 --adda !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
 --adda !d          !s                              = err2 "adda" d s
@@ -323,16 +352,13 @@ data Sel
 --addi !d          !s                              = err2 "addi" d s
 --
 --addq :: Ins2
---addq !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d s
+--addq !d          !s@(Imm _)  | d <>? _dst, isQ s = ins2 "addq" d sScope
 --addq !d          !s                              = err2 "addq" d s
 --
 --addx :: Ins2
 --addx !d@(Data _) !s@(Data _)                     = ins2 "addx" d s
 --addx !d          !s                              = err2 "addx" d s
---
---ins2 :: String -> Ins2
---ins2 _ a b = return a -- TODO
---
+
 --err2 :: String -> Ins2
 --err2 _ a b = fail "problem" -- TODO
 --

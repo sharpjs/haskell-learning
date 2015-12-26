@@ -22,10 +22,13 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 
 module Aex.Asm where
 
 import Aex.Scope
+import Aex.Types (Type)
 
 import Control.Monad.Reader
 import Control.Monad.ST
@@ -78,14 +81,16 @@ indent = raw "    "
 eol :: Asm ()
 eol = rawCh '\n'
 
-directive :: ByteString -> [AnyShowAsm] -> Asm ()
-directive op args = do
-    indent
-    raw $ lazyByteString op
-    case args of
-        [] -> return ()
-        as -> rawCh ' ' >> commaList as
-    eol
+class Directive a where
+    directive :: ByteString -> a -> Asm ()
+
+instance (ShowAsm a, ShowAsm b) => Directive (Type, a, b) where
+    directive op (t, a, b) = do
+        indent
+        raw $  lazyByteString op
+            <> char8 ' ' <> showAsm a
+            <> char8 ',' <> showAsm b
+        eol
 
 commaList :: [AnyShowAsm] -> Asm ()
 commaList []     = return ()
