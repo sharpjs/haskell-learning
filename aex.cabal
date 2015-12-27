@@ -16,6 +16,7 @@ library
   hs-source-dirs:       src
   exposed-modules:      Aex.Asm
                       , Aex.AST
+                      , Aex.Pos
                       , Aex.Scope
                       , Aex.Symbol
                       , Aex.Targets.Mcf5307
