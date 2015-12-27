@@ -16,6 +16,7 @@ library
   hs-source-dirs:       src
   exposed-modules:      Aex.Asm
                       , Aex.AST
+                      , Aex.Message
                       , Aex.Pos
                       , Aex.Scope
                       , Aex.Symbol
@@ -28,6 +29,7 @@ library
                       , hashable
                       , hashtables
                       , mtl
+                      , vector
   default-language:     Haskell2010
 
 executable aex
