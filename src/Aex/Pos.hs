@@ -36,8 +36,12 @@ type Line = Word
 type Column = Word
 
 -- | A position within a named file.
-data Pos = Pos !FileName !Offset !Line !Column
-    deriving (Eq, Show)
+data Pos = Pos
+    { fileName  :: !FileName
+    , byteOff   :: !Offset
+    , lineNum   :: !Line
+    , columnNum :: !Column
+    } deriving (Eq, Show)
 
 -- | Create a new 'Pos' positioned at the beginning of the named file.
 bof :: ByteString -> Pos
