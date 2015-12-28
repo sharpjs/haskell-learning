@@ -65,3 +65,10 @@ instance Display Pos where
         <> char8 ':' <> wordDec l
         <> char8 ':' <> wordDec c
 
+--------------------------------------------------------------------------------
+
+-- | Class for items having a textual position within a named file.
+class HasPos a where
+    -- | Get the textual position.
+    pos :: a -> Pos
+
