@@ -31,6 +31,8 @@ library
                       , mtl
                       , vector
   default-language:     Haskell2010
+  default-extensions:   MultiWayIf
+                      , OverloadedStrings
 
 executable aex
   hs-source-dirs:       app
