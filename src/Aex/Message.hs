@@ -1,5 +1,5 @@
 {-
-    Message Reporting
+    Compiler Messages
 
     This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
@@ -21,34 +21,59 @@
 module Aex.Message where
 
 import Aex.Pos
-import Control.Monad.ST
-import Data.ByteString (ByteString)
+import Aex.Util                 (Display, display)
+import Data.ByteString          (ByteString)
+import Data.ByteString.Builder
+import Data.Monoid
 
-import qualified Data.Vector.Mutable as V
+import qualified Data.Sequence as S
 
 --------------------------------------------------------------------------------
 
 data Message = Message
-    { messagePos   :: !Pos
+    { messageId    :: !MessageId
     , messageLevel :: !MessageLevel
-    , messageId    :: !MessageId
-    , messageText  ::  ByteString
-    } deriving (Show)
+    , messagePos   :: !Pos
+    , messageText  ::  Builder
+    }
 
 data MessageLevel
-    = Warning | Error
+    = Warning
+    | Error
     deriving (Eq, Ord, Show)
 
 data MessageId
-    = Msg_Lex_Unrec
-    deriving (Eq, Ord, Show)
+    = Id_LexUnrecChar
+    deriving (Eq, Ord, Show, Enum)
+
+instance HasPos Message where
+    pos = messagePos
 
 --------------------------------------------------------------------------------
 
-newtype Log s = Log (V.STVector s Message)
+data Log = Log
+    { messages   :: S.Seq Message
+    , errorCount :: Int
+    }
 
-emptyLog :: ST s (Log s)
-emptyLog = V.new 16 >>= return . Log
+emptyLog :: Log
+emptyLog = Log S.empty 0
 
--- more todo
+infixl 5 |>
+(|>) :: Log -> Message -> Log
+Log ms ec |> m = Log ms' ec'
+  where
+    ms' = ms S.|> m
+    ec' = case messageLevel m of
+        Error -> ec + 1
+        _     -> ec
+
+hasErrors :: Log -> Bool
+hasErrors log = errorCount log > 0
+
+--------------------------------------------------------------------------------
+
+errLexUnrecChar p c
+    = Message Id_LexUnrecChar Error p
+    $ "Unrecognized character: '" <> charUtf8 c <> "'"
 
