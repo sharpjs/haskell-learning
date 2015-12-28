@@ -1,5 +1,5 @@
 {-
-    Source Positions
+    Textual Positions
 
     This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
@@ -21,7 +21,12 @@
 -- | Textual positions within files.
 module Aex.Pos where
 
-import Data.ByteString (ByteString)
+import Aex.Util                 (Display, display)
+import Data.ByteString          (ByteString)
+import Data.ByteString.Builder
+import Data.Monoid
+
+--------------------------------------------------------------------------------
 
 -- | A file name.
 type FileName = ByteString
@@ -53,4 +58,10 @@ bof f = Pos f 0 1 1
 move :: Pos -> Char -> Pos
 move (Pos f b l c) '\n' = Pos f (b + 1) (l + 1) (    1)
 move (Pos f b l c) _    = Pos f (b + 1) (l    ) (c + 1)
+
+instance Display Pos where
+    display (Pos f _ l c)
+        =  byteString f
+        <> char8 ':' <> wordDec l
+        <> char8 ':' <> wordDec c
 
