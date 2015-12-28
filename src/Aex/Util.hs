@@ -21,17 +21,17 @@
 module Aex.Util where
 
 import Data.Bits
-import Data.Char (ord)
+import Data.ByteString.Char8   (ByteString)
+import Data.ByteString.Builder (Builder)
+import Data.Char               (ord)
 import Data.Monoid
 import Data.Word
 
-import qualified Data.ByteString.Char8 as C
-
-type Bytes = C.ByteString
-type Name  = C.ByteString
-type Sel   = C.ByteString
-type Width = Word8
+type Bytes = ByteString
+type Name  = ByteString
+type Sel   = ByteString
 type Byte  = Word8
+type Width = Word8
 
 ----------------------------------------------------------------------------------------------------
 
