@@ -35,6 +35,11 @@ type Width = Word8
 
 ----------------------------------------------------------------------------------------------------
 
+class Display a where
+    display :: a -> Builder
+
+----------------------------------------------------------------------------------------------------
+
 -- | Maps an applicative-returning function over a traversable,
 -- |   returning the first non-Nothing value.
 findMapA :: (Applicative f, Traversable t)
