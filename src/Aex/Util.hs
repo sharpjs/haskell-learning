@@ -33,12 +33,12 @@ type Sel   = ByteString
 type Byte  = Word8
 type Width = Word8
 
-----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 class Display a where
     display :: a -> Builder
 
-----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- | Maps an applicative-returning function over a traversable,
 -- |   returning the first non-Nothing value.
@@ -68,7 +68,7 @@ findMapA f t = getFirst . foldMap First <$> traverse f t
 -- getFirst . foldMap First
 --   :: [Maybe a] -> Maybe a
 
-----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 encodeUtf8 :: Char -> [Byte]
 encodeUtf8 = map fromIntegral . encode . ord
