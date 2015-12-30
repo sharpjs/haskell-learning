@@ -14,7 +14,8 @@ cabal-version:      >= 1.10
 
 library
   hs-source-dirs:       src
-  exposed-modules:      Aex.Asm
+  exposed-modules:      Aex.Analysis
+                      , Aex.Asm
                       , Aex.AST
                       , Aex.Message
                       , Aex.Pos

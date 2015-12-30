@@ -20,8 +20,53 @@
 
 module Aex.Analysis where
 
-import Aex.AST
+import Control.Monad.Reader
 import Control.Monad.ST
+import Data.STRef
+
+import Aex.AST
+import Aex.Scope
+import Aex.Symbol
+import Aex.Types
+import Aex.Util (asksST)
+
+analyzeDecls :: Stmt -> ReaderT (STRef s (Scope s)) (ST s) ()
+
+analyzeDecls (Block stmts) =
+    mapM_ analyzeDecls stmts
+
+analyzeDecls (TypeDef name ty) = do
+    types  <- asksST types
+    result <- lift $ define types name ty
+    case result of
+        Defined    -> return ()
+        Shadowed v -> return () -- TODO: Warning
+        Conflict v -> return () -- TODO: Error
+
+analyzeDecls (Label name) = do
+    syms   <- asksST symbols
+    result <- lift $ define syms name $ Symbol name $ IntT Nothing
+    -- TODO
+    return ()
+
+analyzeDecls (Bss name ty) = do
+    -- TODO
+    return ()
+
+analyzeDecls (Data name ty expr) = do
+    -- TODO
+    return ()
+
+analyzeDecls (Alias name ty expr) = do
+    -- TODO
+    return ()
+
+analyzeDecls (Func name ty stmt) = do
+    -- TODO
+    return ()
+
+analyzeDecls _ =
+    return ()
 
 -- 1: collect defined names and their types
 -- 2: type check, const reduction, code gen
