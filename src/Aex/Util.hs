@@ -18,14 +18,19 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
+{-# LANGUAGE FlexibleContexts #-}
+
 module Aex.Util where
 
+import Control.Monad.Reader
+import Control.Monad.ST
 import Data.Bits
 import Data.ByteString.Char8   (ByteString)
 import Data.ByteString.Builder (Builder)
 import Data.Char               (ord)
 import Data.Monoid
 import Data.Word
+import Data.STRef
 
 type Bytes = ByteString
 type Name  = ByteString
@@ -67,6 +72,21 @@ findMapA f t = getFirst . foldMap First <$> traverse f t
 --
 -- getFirst . foldMap First
 --   :: [Maybe a] -> Maybe a
+
+--------------------------------------------------------------------------------
+
+askST :: ( MonadTrans t
+         , MonadReader (STRef s a) (t (ST s))
+         )
+      => t (ST s) a
+askST = ask >>= lift . readSTRef
+
+asksST :: ( MonadTrans t
+          , MonadReader (STRef s a) (t (ST s))
+          )
+       => (a -> b)
+       -> t (ST s) b
+asksST f = askST >>= return . f
 
 --------------------------------------------------------------------------------
 
