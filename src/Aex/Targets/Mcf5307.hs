@@ -202,6 +202,10 @@ data Operand
 infixl 9 @:
 (@:) = Operand
 
+instance Operandy Operand where
+    locOf  (Operand l _) = AnyShowAsm l
+    typeOf (Operand _ t) = t
+
 instance ShowAsm Operand where
     showAsm (Operand loc _) = showAsm loc
 

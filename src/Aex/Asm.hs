@@ -23,12 +23,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleInstances #-}
-
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Aex.Asm where
 
 import Aex.Scope
-import Aex.Types (Type)
+import Aex.Symbol
+import Aex.Types
 
 import Control.Monad.Reader
 import Control.Monad.ST
@@ -60,7 +61,7 @@ instance Functor Asm where
 
 instance Applicative Asm where
     pure a          = Asm $ pure a
-    Asm a <*> Asm b = Asm $ a <*> b
+    Asm f <*> Asm a = Asm $ f <*> a
 
 instance Monad Asm where
     return      = pure
@@ -69,33 +70,43 @@ instance Monad Asm where
 raw :: Builder -> Asm ()
 raw s = Asm $ tell s
 
-rawCh :: Char -> Asm ()
-rawCh c = raw $ char8 c
+scoped :: (Scope s -> r) -> AsmWriter s r
+scoped f = ask >>= lift . lift . readSTRef >>= return . f
 
-rawLn :: Builder -> Asm ()
-rawLn s = raw s >> eol
+declareSym :: ByteString -> Asm Symbol
+declareSym name = Asm $ do
+    st <- scoped symbols
+    let symbol = (Symbol "" u8)
+    result <- lift . lift $ define st "" symbol
+    case result of
+        Defined    -> return symbol
+        Shadowed _ -> return symbol
+        Conflict t -> fail "redefined type"
 
-indent :: Asm ()
-indent = raw "    "
-
-eol :: Asm ()
-eol = rawCh '\n'
+class Operandy a where
+    locOf  :: a -> AnyShowAsm
+    typeOf :: a -> Type
 
 class Directive a where
     directive :: ByteString -> a -> Asm ()
 
 instance (ShowAsm a, ShowAsm b) => Directive (Type, a, b) where
-    directive op (t, a, b) = do
-        indent
-        raw $  lazyByteString op
-            <> char8 ' ' <> showAsm a
-            <> char8 ',' <> showAsm b
-        eol
+    directive op (t, a, b) = raw
+        $  indent
+        <> lazyByteString op
+        <> char8 ' ' <> showAsm a
+        <> char8 ',' <> showAsm b
+        <> eol
 
-commaList :: [AnyShowAsm] -> Asm ()
-commaList []     = return ()
-commaList (a:as) = rawLn $
-    showAsm a <> mconcat (("," <>) . showAsm <$> as)
+commaList :: [AnyShowAsm] -> Builder
+commaList []     = mempty
+commaList (a:as) = showAsm a <> mconcat (("," <>) . showAsm <$> as)
+
+indent :: Builder
+indent = "    "
+
+eol :: Builder
+eol = char8 '\n'
 
 --------------------------------------------------------------------------------
 -- A Show class for assembly
