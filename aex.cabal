@@ -17,6 +17,7 @@ library
   exposed-modules:      Aex.Analysis
                       , Aex.Asm
                       , Aex.AST
+                      , Aex.CodeGen.Types
                       , Aex.Message
                       , Aex.Pos
                       , Aex.Scope
