@@ -19,10 +19,12 @@
 -}
 
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE FlexibleInstances     #-}
 
 module Aex.CodeGen.Ops where
 
-import Aex.Asm (ShowAsm)
+import Aex.Asm (ShowAsm, showAsm)
 import Aex.AST (Exp)
 import Aex.CodeGen.Types
 
@@ -32,5 +34,8 @@ class ShowAsm a => Loc m a where
     toExpr   :: a   -> Exp
     mode     :: a   -> m
 
-type Operand loc = (loc, TypeA)
+type Operand a = (a, TypeA)
+
+instance ShowAsm a => ShowAsm (Operand a) where
+    showAsm = showAsm . fst
 
