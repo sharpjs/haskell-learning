@@ -18,14 +18,17 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
+{-# LANGUAGE DeriveFoldable        #-}
+{-# LANGUAGE DeriveFunctor         #-}
+{-# LANGUAGE DeriveTraversable     #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
-{-# LANGUAGE FlexibleInstances     #-}
 
 module Aex.CodeGen.Ops where
 
 import Aex.Asm (ShowAsm, showAsm)
-import Aex.AST (Exp)
+import Aex.AST (Exp(..))
 import Aex.CodeGen.Types
 
 class ShowAsm a => Loc m a where
@@ -34,8 +37,45 @@ class ShowAsm a => Loc m a where
     toExpr   :: a   -> Exp
     mode     :: a   -> m
 
-type Operand a = (a, TypeA)
+data ShowAsm a => Operand a = Operand
+    { dataOf :: a
+    , typeOf :: TypeA
+    }
 
 instance ShowAsm a => ShowAsm (Operand a) where
-    showAsm = showAsm . fst
+    showAsm = showAsm . dataOf
+
+--------------------------------------------------------------------------------
+
+data Arity1 a = A1 a
+    deriving (Functor, Foldable, Traversable)
+
+data Arity2 a = A2 a a
+    deriving (Functor, Foldable, Traversable)
+
+data Arity3 a = A3 a a a
+    deriving (Functor, Foldable, Traversable)
+
+--------------------------------------------------------------------------------
+
+class Functor a => ConstOp a t where
+    coTypeCheck :: a TypeA   -> Maybe TypeA
+    coEvalInt   :: a Integer -> Integer
+    coEvalFloat :: a Double  -> Double
+    coEvalExp   :: a Exp     -> Exp
+
+data AddConst
+data SubConst
+
+instance ConstOp Arity2 AddConst where
+    coTypeCheck (A2 a b) = Just a -- TODO
+    coEvalInt   (A2 a b) = a + b
+    coEvalFloat (A2 a b) = a + b
+    coEvalExp   (A2 a b) = Add "" a b
+
+instance ConstOp Arity2 SubConst where
+    coTypeCheck (A2 a b) = Just a -- TODO
+    coEvalInt   (A2 a b) = a - b
+    coEvalFloat (A2 a b) = a - b
+    coEvalExp   (A2 a b) = Sub "" a b
 
