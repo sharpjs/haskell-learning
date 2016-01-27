@@ -58,24 +58,38 @@ data Arity3 a = A3 a a a
 
 --------------------------------------------------------------------------------
 
-class Functor a => ConstOp a t where
-    coTypeCheck :: a TypeA   -> Maybe TypeA
-    coEvalInt   :: a Integer -> Integer
-    coEvalFloat :: a Double  -> Double
-    coEvalExp   :: a Exp     -> Exp
+class Functor a => ConstOp o a where
+    coTypeCheck :: o -> a TypeA   -> Maybe TypeA
+    coEvalInt   :: o -> a Integer -> Integer
+    coEvalFloat :: o -> a Double  -> Double
+    coEvalExp   :: o -> a Exp     -> Exp
 
-data AddConst
-data SubConst
+    coInvoke :: o -> a (Operand Exp) -> Maybe (Operand Exp)
+    coInvoke op os =
+        let es = fmap dataOf os
+            ty = coTypeCheck op $ typeOf <$> os
+    --        is   = traverse intVal es
+    --        e    = case is of
+    --                Just ns -> IntVal $ coEvalInt ns
+    --                Nothing -> coEvalExp es
+    --    in Just $ Operand e t
+        in Nothing
+    --  where
+    --    intVal (IntVal n) = Just n
+    --    intVal _          = Nothing
 
-instance ConstOp Arity2 AddConst where
-    coTypeCheck (A2 a b) = Just a -- TODO
-    coEvalInt   (A2 a b) = a + b
-    coEvalFloat (A2 a b) = a + b
-    coEvalExp   (A2 a b) = Add "" a b
+data AddConst = AddConst
+data SubConst = SubConst
 
-instance ConstOp Arity2 SubConst where
-    coTypeCheck (A2 a b) = Just a -- TODO
-    coEvalInt   (A2 a b) = a - b
-    coEvalFloat (A2 a b) = a - b
-    coEvalExp   (A2 a b) = Sub "" a b
+instance ConstOp AddConst Arity2 where
+    coTypeCheck _ (A2 a b) = Just a -- TODO
+    coEvalInt   _ (A2 a b) = a + b
+    coEvalFloat _ (A2 a b) = a + b
+    coEvalExp   _ (A2 a b) = Add "" a b
+
+instance ConstOp SubConst Arity2 where
+    coTypeCheck _ (A2 a b) = Just a -- TODO
+    coEvalInt   _ (A2 a b) = a - b
+    coEvalFloat _ (A2 a b) = a - b
+    coEvalExp   _ (A2 a b) = Sub "" a b
 
