@@ -47,27 +47,27 @@ instance ShowAsm a => ShowAsm (Operand a) where
 
 --------------------------------------------------------------------------------
 
-data Arity1 a = A1 a
+data Arity1 t a = A1 a
     deriving (Functor, Foldable, Traversable)
 
-data Arity2 a = A2 a a
+data Arity2 t a = A2 a a
     deriving (Functor, Foldable, Traversable)
 
-data Arity3 a = A3 a a a
+data Arity3 t a = A3 a a a
     deriving (Functor, Foldable, Traversable)
 
 --------------------------------------------------------------------------------
 
-class Functor a => ConstOp o a where
-    coTypeCheck :: o -> a TypeA   -> Maybe TypeA
-    coEvalInt   :: o -> a Integer -> Integer
-    coEvalFloat :: o -> a Double  -> Double
-    coEvalExp   :: o -> a Exp     -> Exp
+class Functor a => ConstOp a where
+    coTypeCheck :: a TypeA   -> Maybe TypeA
+    coEvalInt   :: a Integer -> Integer
+    coEvalFloat :: a Double  -> Double
+    coEvalExp   :: a Exp     -> Exp
 
-    coInvoke :: o -> a (Operand Exp) -> Maybe (Operand Exp)
-    coInvoke op os =
+    coInvoke :: a (Operand Exp) -> Maybe (Operand Exp)
+    coInvoke os =
         let es = fmap dataOf os
-            ty = coTypeCheck op $ typeOf <$> os
+            ty = coTypeCheck $ typeOf <$> os
     --        is   = traverse intVal es
     --        e    = case is of
     --                Just ns -> IntVal $ coEvalInt ns
@@ -78,18 +78,18 @@ class Functor a => ConstOp o a where
     --    intVal (IntVal n) = Just n
     --    intVal _          = Nothing
 
-data AddConst = AddConst
-data SubConst = SubConst
+data AddConst
+data SubConst
 
-instance ConstOp AddConst Arity2 where
-    coTypeCheck _ (A2 a b) = Just a -- TODO
-    coEvalInt   _ (A2 a b) = a + b
-    coEvalFloat _ (A2 a b) = a + b
-    coEvalExp   _ (A2 a b) = Add "" a b
+instance ConstOp (Arity2 AddConst) where
+    coTypeCheck (A2 a b) = Just a -- TODO
+    coEvalInt   (A2 a b) = a + b
+    coEvalFloat (A2 a b) = a + b
+    coEvalExp   (A2 a b) = Add "" a b
 
-instance ConstOp SubConst Arity2 where
-    coTypeCheck _ (A2 a b) = Just a -- TODO
-    coEvalInt   _ (A2 a b) = a - b
-    coEvalFloat _ (A2 a b) = a - b
-    coEvalExp   _ (A2 a b) = Sub "" a b
+instance ConstOp (Arity2 SubConst) where
+    coTypeCheck (A2 a b) = Just a -- TODO
+    coEvalInt   (A2 a b) = a - b
+    coEvalFloat (A2 a b) = a - b
+    coEvalExp   (A2 a b) = Sub "" a b
 
