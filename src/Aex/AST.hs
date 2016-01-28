@@ -94,6 +94,10 @@ data Flag
     | Flag Name
     deriving (Eq, Show)
 
+intVal :: Exp -> Maybe Integer
+intVal (IntVal n) = Just n
+intVal _          = Nothing
+
 instance ShowAsm Exp where
     showAsm (ValRef n)  = byteString n
     showAsm (IntVal v)  = asmInt v
