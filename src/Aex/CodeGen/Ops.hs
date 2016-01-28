@@ -48,13 +48,22 @@ instance ShowAsm a => ShowAsm (Operand a) where
 --------------------------------------------------------------------------------
 
 data Arity1 t a = A1 a
-    deriving (Functor, Foldable, Traversable)
+    deriving (Eq, Show, Functor, Foldable, Traversable)
 
 data Arity2 t a = A2 a a
-    deriving (Functor, Foldable, Traversable)
+    deriving (Eq, Show, Functor, Foldable, Traversable)
 
 data Arity3 t a = A3 a a a
-    deriving (Functor, Foldable, Traversable)
+    deriving (Eq, Show, Functor, Foldable, Traversable)
+
+onA1 :: (a -> r) -> Arity1 t a -> r
+onA1 f (A1 a) = f a
+
+onA2 :: (a -> a -> r) -> Arity2 t a -> r
+onA2 f (A2 a b) = f a b
+
+onA3 :: (a -> a -> a -> r) -> Arity3 t a -> r
+onA3 f (A3 a b c) = f a b c
 
 --------------------------------------------------------------------------------
 
@@ -82,14 +91,14 @@ data AddConst
 data SubConst
 
 instance ConstOp (Arity2 AddConst) where
-    coTypeCheck (A2 a b) = Just a -- TODO
-    coEvalInt   (A2 a b) = a + b
-    coEvalFloat (A2 a b) = a + b
-    coEvalExp   (A2 a b) = Add "" a b
+    coTypeCheck = onA2 checkTypesCompat
+    coEvalInt   = onA2 (+)
+    coEvalFloat = onA2 (+)
+    coEvalExp   = onA2 (Add "")
 
 instance ConstOp (Arity2 SubConst) where
-    coTypeCheck (A2 a b) = Just a -- TODO
-    coEvalInt   (A2 a b) = a - b
-    coEvalFloat (A2 a b) = a - b
-    coEvalExp   (A2 a b) = Sub "" a b
+    coTypeCheck = onA2 checkTypesCompat
+    coEvalInt   = onA2 (-)
+    coEvalFloat = onA2 (-)
+    coEvalExp   = onA2 (Sub "")
 
