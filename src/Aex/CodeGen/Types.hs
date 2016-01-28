@@ -28,12 +28,13 @@ import Aex.Types
 data TypeA = TypeA
     { sourceType :: Type
     , form       :: TypeForm
-    }
+    } deriving (Eq, Show)
 
 data TypeForm
     = Inty   (Maybe IntSpec)
     | Floaty (Maybe FloatSpec)
     | Opaque
+    deriving (Eq, Show)
 
 analyzeType :: Type -> [Table s Type] -> ST s (Maybe TypeA)
 analyzeType t ts = do
@@ -51,4 +52,24 @@ formOf (IntT   s  ) _  = return . Just $ Inty   s
 formOf (FloatT s  ) _  = return . Just $ Floaty s
 formOf (PtrT   a v) ts = formOf a ts
 formOf _            _  = return . Just $ Opaque
+
+checkTypesCompat :: TypeA -> TypeA -> Maybe TypeA
+checkTypesCompat x y =
+    if sourceType x == sourceType y
+        -- A type is compatible with itself
+        then Just x
+        
+        -- Otherwise, two types are compatible if:
+        --   * they are of the same form, and
+        --   * at least one is arbitrarily sized
+        else case (form x, form y) of
+            (Inty xf, Inty yf) -> case (xf, yf) of
+                (_, Nothing) -> Just x
+                (Nothing, _) -> Just y
+                _            -> Nothing
+            (Floaty xf, Floaty yf) -> case (xf, yf) of
+                (_, Nothing) -> Just x
+                (Nothing, _) -> Just y
+                _            -> Nothing
+            _ -> Nothing
 
