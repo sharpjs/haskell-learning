@@ -27,8 +27,10 @@
 
 module Aex.CodeGen.Ops where
 
+import Data.Maybe
+
 import Aex.Asm (ShowAsm, showAsm)
-import Aex.AST (Exp(..))
+import Aex.AST (Exp(..), intVal)
 import Aex.CodeGen.Types
 
 class ShowAsm a => Loc m a where
@@ -67,7 +69,7 @@ onA3 f (A3 a b c) = f a b c
 
 --------------------------------------------------------------------------------
 
-class Functor a => ConstOp a where
+class Traversable a => ConstOp a where
     coTypeCheck :: a TypeA   -> Maybe TypeA
     coEvalInt   :: a Integer -> Integer
     coEvalFloat :: a Double  -> Double
@@ -75,17 +77,13 @@ class Functor a => ConstOp a where
 
     coInvoke :: a (Operand Exp) -> Maybe (Operand Exp)
     coInvoke os =
-        let es = fmap dataOf os
-            ty = coTypeCheck $ typeOf <$> os
-    --        is   = traverse intVal es
-    --        e    = case is of
-    --                Just ns -> IntVal $ coEvalInt ns
-    --                Nothing -> coEvalExp es
-    --    in Just $ Operand e t
-        in Nothing
-    --  where
-    --    intVal (IntVal n) = Just n
-    --    intVal _          = Nothing
+        let es = dataOf <$> os
+            ts = typeOf <$> os
+            t  = coTypeCheck ts
+            n  = IntVal . coEvalInt <$> traverse intVal es
+            e' = coEvalExp es
+            e  = fromMaybe e' n
+        in Operand e <$> t
 
 data AddConst
 data SubConst
