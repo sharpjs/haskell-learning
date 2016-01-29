@@ -1,5 +1,5 @@
 {-
-    Assembly Language Monad
+    Assembly Output Monad
 
     This file is part of AEx.
     Copyright (C) 2015 Jeffrey Sharp
@@ -18,12 +18,12 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 
 module Aex.Asm where
 
@@ -42,6 +42,12 @@ import Data.STRef
 import System.IO (Handle)
 
 --------------------------------------------------------------------------------
+-- Asm Monad
+--
+-- Asm is a stack of:
+-- > WriterT - accumulates output
+-- > ReaderT - references a context
+-- > ST      - state thread
 
 newtype Asm a = Asm (forall s. AsmWriter s a)
 
