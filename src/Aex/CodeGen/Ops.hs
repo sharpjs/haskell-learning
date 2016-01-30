@@ -33,6 +33,7 @@ import Data.Maybe
 import Aex.Asm (ShowAsm, showAsm)
 import Aex.AST (Exp(..), intVal)
 import Aex.CodeGen.Types
+import Aex.Pos
 
 class ShowAsm a => Loc m a where
     fromExpr :: Exp -> a
@@ -77,8 +78,13 @@ data Traversable a => ConOp a = ConOp
     , conEvalExp   :: a Exp     -> Exp
     }
 
-conInvoke :: Traversable a => ConOp a -> a (Operand Exp) -> Maybe (Operand Exp)
-conInvoke op args =
+invokeConOp :: Traversable a
+            => ConOp a
+            -> Pos
+            -> a     (Operand Exp)
+            -> Maybe (Operand Exp)
+
+invokeConOp op pos args =
     let exps = dataOf <$> args
         tys  = typeOf <$> args
         ty   = conTypeCheck op tys
