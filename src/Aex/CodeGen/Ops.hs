@@ -119,3 +119,13 @@ data Traversable a => AsmOp a m = AsmOp
     , asmOpcodes      :: [(Int, ByteString)]
     }
 
+invokeAsmOp :: (Traversable a, Loc m l)
+            => AsmOp a m
+            -> Pos
+            -> a     (Operand l)
+            -> Maybe (Operand l)
+
+invokeAsmOp op pos args =
+    -- TODO
+    Nothing
+
