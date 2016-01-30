@@ -27,6 +27,7 @@
 
 module Aex.CodeGen.Ops where
 
+import Data.ByteString (ByteString)
 import Data.Maybe
 
 import Aex.Asm (ShowAsm, showAsm)
@@ -100,5 +101,15 @@ subC = ConOp
     , conEvalInt   = onA2 (-)
     , conEvalFloat = onA2 (-)
     , conEvalExp   = onA2 (Sub "")
+    }
+
+--------------------------------------------------------------------------------
+
+data Traversable a => AsmOp a m = AsmOp
+    { asmModeCheck    :: a m        -> Bool
+    , asmTypeCheck    :: a TypeA    -> Maybe TypeA
+    , asmFormCheck    :: a TypeForm -> Maybe Int
+    , asmDefaultWidth :: Int
+    , asmOpcodes      :: [(Int, ByteString)]
     }
 
