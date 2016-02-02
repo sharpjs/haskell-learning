@@ -2,7 +2,7 @@
     Compiler Messages
 
     This file is part of AEx.
-    Copyright (C) 2015 Jeffrey Sharp
+    Copyright (C) 2016 Jeffrey Sharp
     
     AEx is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published
@@ -18,10 +18,13 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Aex.Message where
 
 import Aex.Pos
 import Aex.Util                 (Display, display)
+import Aex.Util.Accum
 import Data.ByteString          (ByteString)
 import Data.ByteString.Builder
 import Data.Monoid
@@ -59,14 +62,14 @@ data Log = Log
 emptyLog :: Log
 emptyLog = Log S.empty 0
 
-infixl 5 |>
-(|>) :: Log -> Message -> Log
-Log ms ec |> m = Log ms' ec'
-  where
-    ms' = ms S.|> m
-    ec' = case messageLevel m of
-        Error -> ec + 1
-        _     -> ec
+instance Accum Message Log where
+    empty = emptyLog
+    Log ms ec +> m = Log ms' ec'
+      where
+        ms' = ms +> m
+        ec' = case messageLevel m of
+            Error -> ec + 1
+            _     -> ec
 
 hasErrors :: Log -> Bool
 hasErrors log = errorCount log > 0

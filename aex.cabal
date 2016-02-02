@@ -20,12 +20,14 @@ library
                       , Aex.CodeGen.Ops
                       , Aex.CodeGen.Types
                       , Aex.Message
+                      , Aex.Output
                       , Aex.Pos
                       , Aex.Scope
                       , Aex.Symbol
                       , Aex.Targets.Mcf5307
                       , Aex.Types
                       , Aex.Util
+                      , Aex.Util.Accum
                       , Aex.Util.BitSet
   build-depends:        base >= 4.7 && < 5
                       , bytestring
