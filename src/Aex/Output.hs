@@ -23,24 +23,23 @@
 
 module Aex.Output where
 
+import Aex.Asm
 import Aex.Message
 import Aex.Util.Accum
 import Control.Monad.State.Class
-import Data.ByteString.Builder (Builder)
 
 --------------------------------------------------------------------------------
 
 data Output = Output
-    { outAsm :: Builder
-    , outLog :: Log
+    { outCode :: Code
+    , outLog  :: Log
     }
 
-emptyOutput :: Output
-emptyOutput = Output mempty emptyLog
+instance Empty Output where
+    empty = Output empty empty
 
 instance Accum Message Output where
-    empty           = emptyOutput
-    Output a l +> m = Output a (l +> m)
+    Output c l +> m = Output c (l +> m)
 
 putMessage :: MonadState Output m => Message -> m ()
 putMessage m = modify (+> m)

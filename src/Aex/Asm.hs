@@ -51,9 +51,11 @@ import System.IO (Handle)
 -- | An accumulator for rendered code.
 newtype Code = Code Builder
 
+instance Empty Code where
+    empty = Code ""
+
 instance ShowAsm a => Accum a Code where
-    empty       = Code $ ""
-    Code c +> a = Code $ c +> showAsm a
+    Code c +> a = Code $ c <> showAsm a
 
 
 -- | A value that is rendered to code with a trailing newline.

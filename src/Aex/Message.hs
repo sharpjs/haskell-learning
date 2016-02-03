@@ -59,11 +59,10 @@ data Log = Log
     , errorCount :: Int
     }
 
-emptyLog :: Log
-emptyLog = Log S.empty 0
+instance Empty Log where
+    empty = Log S.empty 0
 
 instance Accum Message Log where
-    empty = emptyLog
     Log ms ec +> m = Log ms' ec'
       where
         ms' = ms +> m

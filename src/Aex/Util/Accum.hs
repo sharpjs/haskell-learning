@@ -26,16 +26,22 @@ import Data.Monoid
 
 import qualified Data.Sequence as S
 
-class Accum a t where
+class Empty t where
     empty :: t
-    (+>)  :: t -> a -> t
+
+class Accum a t where
+    (+>) :: t -> a -> t
     infixl 5 +>
 
-instance Monoid m => Accum m m where
-    empty = mempty
-    (+>)  = (<>)
+-- Would be nice but causes undecidable instances
+--instance Monoid m => Empty m where
+--    empty = mempty
+--instance Monoid m => Accum m m where
+--    (+>) = (<>)
+
+instance Empty (S.Seq a) where
+    empty = S.empty
 
 instance Accum a (S.Seq a) where
-    empty = S.empty
-    (+>)  = (S.|>)
+    (+>) = (S.|>)
 
