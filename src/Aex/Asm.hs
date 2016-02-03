@@ -30,6 +30,7 @@ module Aex.Asm where
 import Aex.Scope
 import Aex.Symbol
 import Aex.Types
+import Aex.Util.Accum
 
 import Control.Monad.Reader
 import Control.Monad.ST
@@ -40,6 +41,27 @@ import Data.ByteString.Builder
 import Data.Monoid
 import Data.STRef
 import System.IO (Handle)
+
+-- NOTE: I think that the Asm Monad idea below is not cohesive.  It tries to do
+-- too much.  Rather, Asm should be concerned only with building assembly code
+-- for output.
+--
+-- Let's try to write that more-cohesive type as Code.
+
+-- | An accumulator for rendered code.
+newtype Code = Code Builder
+
+instance ShowAsm a => Accum a Code where
+    empty       = Code $ ""
+    Code c +> a = Code $ c +> showAsm a
+
+
+-- | A value that is rendered to code with a trailing newline.
+newtype Line a = Line a
+    deriving (Show)
+
+instance ShowAsm a => ShowAsm (Line a) where
+    showAsm (Line a) = showAsm a <> eol
 
 --------------------------------------------------------------------------------
 -- Asm Monad
