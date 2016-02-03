@@ -1,4 +1,6 @@
 {-
+    Compilation Output
+
     This file is part of AEx.
     Copyright (C) 2016 Jeffrey Sharp
     
@@ -17,14 +19,14 @@
 -}
 
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts      #-}
 
--- | Compilation Output
 module Aex.Output where
 
-import Data.ByteString.Builder
-import Data.Monoid
 import Aex.Message
 import Aex.Util.Accum
+import Control.Monad.State.Class
+import Data.ByteString.Builder (Builder)
 
 --------------------------------------------------------------------------------
 
@@ -37,6 +39,9 @@ emptyOutput :: Output
 emptyOutput = Output mempty emptyLog
 
 instance Accum Message Output where
-    empty  = emptyOutput
-    o +> m = Output (outAsm o) (outLog o +> m)
+    empty           = emptyOutput
+    Output a l +> m = Output a (l +> m)
+
+putMessage :: MonadState Output m => Message -> m ()
+putMessage m = modify (+> m)
 
