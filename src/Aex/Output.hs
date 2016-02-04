@@ -38,8 +38,14 @@ data Output = Output
 instance Empty Output where
     empty = Output empty empty
 
+instance ShowAsm a => Accum (Line a) Output where
+    Output c l +> a = Output (c +> a) l
+
 instance Accum Message Output where
     Output c l +> m = Output c (l +> m)
+
+putCode :: (MonadState Output m, ShowAsm a) => Line a -> m ()
+putCode c = modify (+> c)
 
 putMessage :: MonadState Output m => Message -> m ()
 putMessage m = modify (+> m)
