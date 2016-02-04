@@ -202,9 +202,9 @@ data Operand
 infixl 9 @:
 (@:) = Operand
 
-instance Operandy Operand where
-    locOf  (Operand l _) = AnyShowAsm l
-    typeOf (Operand _ t) = t
+--instance Operandy Operand where
+--    locOf  (Operand l _) = AnyShowAsm l
+--    typeOf (Operand _ t) = t
 
 instance ShowAsm Operand where
     showAsm (Operand loc _) = showAsm loc
@@ -281,11 +281,11 @@ _pcRel  = _pcDisp <> _pcDispIdx
 
 --------------------------------------------------------------------------------
 
--- Instructions of arity N = 0 to 3
-type Ins0 = Asm Operand
-type Ins1 = Operand -> Asm Operand
-type Ins2 = Operand -> Operand -> Asm Operand
-type Ins3 = Operand -> Operand -> Operand -> Asm Operand
+---- Instructions of arity N = 0 to 3
+--type Ins0 = Asm Operand
+--type Ins1 = Operand -> Asm Operand
+--type Ins2 = Operand -> Operand -> Asm Operand
+--type Ins3 = Operand -> Operand -> Operand -> Asm Operand
 
 --------------------------------------------------------------------------------
 
@@ -307,17 +307,17 @@ data Sel
 --add UseQ = addq
 --add UseX = addx
 
-addConst :: Ins2
-addConst !x@(Operand (Imm xe) xt) !y@(Operand (Imm ye) yt) =
-    go (eqScalarType xt yt) xe ye
-  where
-    go Nothing _ _
-        = fail "type mismatch"
-    go (Just t) (IntVal xv) (IntVal yv)
-        = let v = xv + yv
-          in return $ Operand (Imm $ IntVal v) t
-
-addConst _ _ = fail "only can add two immediates"
+--addConst :: Ins2
+--addConst !x@(Operand (Imm xe) xt) !y@(Operand (Imm ye) yt) =
+--    go (eqScalarType xt yt) xe ye
+--  where
+--    go Nothing _ _
+--        = fail "type mismatch"
+--    go (Just t) (IntVal xv) (IntVal yv)
+--        = let v = xv + yv
+--          in return $ Operand (Imm $ IntVal v) t
+--
+--addConst _ _ = fail "only can add two immediates"
 
 --add_ :: Ins2
 --add_ !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s
@@ -327,25 +327,25 @@ addConst _ _ = fail "only can add two immediates"
 --add_ !d          !s@(Data _) | d <>? _dst        = ins2 "add"  d s
 --add_ !d          !s                              = err2 "add"  d s
 
-addg :: Ins2
-addg !s@(Operand sl st) !d@(Operand dl dt)
-    | sl <>? _src,  dl <>? _data = ok
-    | sl <>? _data, dl <>? _dst  = ok
-    | otherwise                  = fail "mode mismatch"
-  where
-    ok = do
-        case eqScalarType st dt of
-            Nothing -> fail "type mismatch"
-            Just t  -> directive "add" (t, sl, dl)
-        return d
-
-eqScalarType :: Type -> Type -> Maybe Type
-eqScalarType a@(IntT a') b@(IntT b')
-    | a' == b'     = Just a  -- Types specify integers identically
-    | isNothing b' = Just a  -- \_ One or both types are universal
-    | isNothing a' = Just b  -- /
-    | otherwise    = Nothing -- Types specify different integers
-eqScalarType _ _ = Nothing   -- Arent' both integer types
+--addg :: Ins2
+--addg !s@(Operand sl st) !d@(Operand dl dt)
+--    | sl <>? _src,  dl <>? _data = ok
+--    | sl <>? _data, dl <>? _dst  = ok
+--    | otherwise                  = fail "mode mismatch"
+--  where
+--    ok = do
+--        case eqScalarType st dt of
+--            Nothing -> fail "type mismatch"
+--            Just t  -> directive "add" (t, sl, dl)
+--        return d
+--
+--eqScalarType :: Type -> Type -> Maybe Type
+--eqScalarType a@(IntT a') b@(IntT b')
+--    | a' == b'     = Just a  -- Types specify integers identically
+--    | isNothing b' = Just a  -- \_ One or both types are universal
+--    | isNothing a' = Just b  -- /
+--    | otherwise    = Nothing -- Types specify different integers
+--eqScalarType _ _ = Nothing   -- Arent' both integer types
 
 --adda :: Ins2
 --adda !d@(Addr _) !s          | s <>? _src        = ins2 "adda" d s

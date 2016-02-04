@@ -36,22 +36,20 @@ data TypeForm
     | Opaque
     deriving (Eq, Show)
 
-analyzeType :: Type -> [Table s Type] -> ST s (Maybe TypeA)
-analyzeType t ts = do
-    f <- formOf t ts
-    return $ TypeA t <$> f
+analyzeType :: Type -> Table Type -> Maybe TypeA
+analyzeType t ts =
+    TypeA t <$> formOf t ts
 
-formOf :: Type -> [Table s Type] -> ST s (Maybe TypeForm)
-formOf (RefT n) ts = do
-    t <- resolve ts n
-    case t of
+formOf :: Type -> Table Type -> Maybe TypeForm
+formOf (RefT n) ts =
+    case resolve n ts of
         Just t  -> formOf t ts
-        Nothing -> return Nothing
+        Nothing -> Nothing
 
-formOf (IntT   s  ) _  = return . Just $ Inty   s
-formOf (FloatT s  ) _  = return . Just $ Floaty s
+formOf (IntT   s  ) _  = Just $ Inty   s
+formOf (FloatT s  ) _  = Just $ Floaty s
 formOf (PtrT   a v) ts = formOf a ts
-formOf _            _  = return . Just $ Opaque
+formOf _            _  = Just $ Opaque
 
 checkTypesCompat :: TypeA -> TypeA -> Maybe TypeA
 checkTypesCompat x y =

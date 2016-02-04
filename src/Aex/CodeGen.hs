@@ -23,8 +23,8 @@ module Aex.CodeGen where
 import Aex.Scope
 
 -- TODO
-data Context s = Context
-    { scope :: Scope s
+data Context = Context
+    { scope :: Scope
     --, out   :: Output
     }
 

@@ -18,58 +18,61 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-module Aex.Scope where
+module Aex.Scope
+    ( Scope, Table, DefineResult
+    , rootScope, subscope, symbols, types, resolve, define
+    ) where
 
-import Aex.Symbol (Symbol)
-import Aex.Types  (Type)
-import Aex.Util   (Name, findMapA)
-import Control.Monad.ST
+import Aex.Symbol    (Symbol)
+import Aex.Types     (Type)
+import Aex.Util      (Name)
+import Data.Foldable (asum)
 
-import qualified Data.HashTable.Class     as H
-import qualified Data.HashTable.ST.Cuckoo as HC
+import qualified Data.HashMap.Strict as H
 
-newtype Table s v = Table (HC.HashTable s Name v)
-    deriving (Show)
-
-data Scope s = Scope
-    { symbols :: [Table s Symbol]
-    , types   :: [Table s Type]
+newtype Table v = Table
+    { maps :: [H.HashMap Name v]
     } deriving (Show)
 
-rootScope :: ST s (Scope s)
-rootScope = newScope Nothing
+data Scope = Scope
+    { symbols :: Table Symbol
+    , types   :: Table Type
+    } deriving (Show)
 
-subscope :: Scope s -> ST s (Scope s)
-subscope = newScope . Just
+rootScope :: Scope
+rootScope = Scope
+    { symbols = Table [H.empty]
+    , types   = Table [H.empty]
+    }
 
-newScope :: Maybe (Scope s) -> ST s (Scope s)
-newScope parent = do
-    st <- H.newSized  32 -- initial symbol capacity
-    tt <- H.newSized 128 -- initial type   capacity
-    return Scope
-        { symbols = Table st : maybe [] symbols parent
-        , types   = Table tt : maybe [] types   parent
-        }
+subscope :: Scope -> Scope
+subscope p = Scope
+    { symbols = Table $ H.empty : maps (symbols p)
+    , types   = Table $ H.empty : maps (types   p)
+    }
 
-resolve :: [Table s v] -> Name -> ST s (Maybe v)
-resolve ts name = findMapA find ts
-  where
-    find (Table t) = H.lookup t name
+resolve :: Name -> Table v -> Maybe v
+resolve n =
+    resolve' n . maps
 
-define :: [Table s v] -> Name -> v -> ST s (DefineResult v)
-define (Table t : ts) name v = do
-    found <- H.lookup t name
-    case found of
-        Just v  -> return $ Conflict v
-        Nothing -> do
-            H.insert t name v
-            found <- resolve ts name
-            return $ case found of
-                Just v  -> Shadowed v
-                Nothing -> Defined
+define :: Name -> v -> Table v -> (Table v, DefineResult v)
+define n v t =
+    let h : hs = maps t
+    in case H.lookup n h of
+        Just v' -> (t, Conflict v')
+        Nothing ->
+            let t' = Table $ H.insert n v h : hs
+            in case resolve' n hs of
+                Just v  -> (t', Shadowed v)
+                Nothing -> (t', Defined)
+
+resolve' :: Name -> [H.HashMap Name v] -> Maybe v
+resolve' n =
+    asum . fmap (H.lookup n)
 
 data DefineResult v
     = Defined
     | Shadowed v
     | Conflict v
+    deriving (Eq, Show)
 
