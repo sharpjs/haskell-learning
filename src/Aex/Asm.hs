@@ -3,67 +3,56 @@
 
     This file is part of AEx.
     Copyright (C) 2016 Jeffrey Sharp
-    
+
     AEx is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published
     by the Free Software Foundation, either version 3 of the License,
     or (at your option) any later version.
-    
+
     AEx is distributed in the hope that it will be useful, but
     WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
     the GNU General Public License for more details.
-    
+
     You should have received a copy of the GNU General Public License
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
 {-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
+--{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+--{-# LANGUAGE OverloadedStrings          #-}
+--{-# LANGUAGE RankNTypes                 #-}
+--{-# LANGUAGE FlexibleInstances          #-}
+--{-# LANGUAGE MultiParamTypeClasses      #-}
 
 module Aex.Asm where
 
-import Aex.Scope
-import Aex.Symbol
-import Aex.Types
-import Aex.Util.Accum
+--import Aex.Scope
+--import Aex.Symbol
+--import Aex.Types
+--import Aex.Util.Accum
 
-import Control.Monad.Reader
-import Control.Monad.ST
-import Control.Monad.State
-import Control.Monad.Writer
-import Data.ByteString.Lazy (ByteString)
+--import Control.Monad.Reader
+--import Control.Monad.ST
+--import Control.Monad.State
+--import Control.Monad.Writer
+--import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Builder
-import Data.Monoid
-import Data.STRef
-import System.IO (Handle)
+--import Data.Monoid
+--import Data.STRef
+--import System.IO (Handle)
 
--- NOTE: I think that the Asm Monad idea below is not cohesive.  It tries to do
--- too much.  Rather, Asm should be concerned only with building assembly code
--- for output.
---
--- Let's try to write that more-cohesive type as Code.
+--------------------------------------------------------------------------------
+-- A Show class for assembly
 
--- | An accumulator for rendered code.
-newtype Code = Code Builder
+class ShowAsm a where
+    showAsm :: a -> Builder
 
-instance Empty Code where
-    empty = Code ""
+data AnyShowAsm where
+    AnyShowAsm :: ShowAsm a => a -> AnyShowAsm
 
-instance ShowAsm a => Accum a Code where
-    Code c +> a = Code $ c <> showAsm a
-
-
--- | A value that is rendered to code with a trailing newline.
-newtype Line a = Line a
-    deriving (Show)
-
-instance ShowAsm a => ShowAsm (Line a) where
-    showAsm (Line a) = showAsm a <> eol
+instance ShowAsm AnyShowAsm where
+    showAsm (AnyShowAsm a) = showAsm a
 
 ----------------------------------------------------------------------------------
 ---- Asm Monad
@@ -72,6 +61,10 @@ instance ShowAsm a => ShowAsm (Line a) where
 ---- > WriterT - accumulates output
 ---- > ReaderT - references a context
 ---- > ST      - state thread
+--
+-- NOTE: I think that the Asm Monad idea below is not cohesive.  It tries to do
+-- too much.  Rather, Asm should be concerned only with building assembly code
+-- for output.
 --
 --newtype Asm a = Asm (forall s. AsmWriter s a)
 --
@@ -134,19 +127,6 @@ instance ShowAsm a => ShowAsm (Line a) where
 --
 --indent :: Builder
 --indent = "    "
-
-eol :: Builder
-eol = char8 '\n'
-
---------------------------------------------------------------------------------
--- A Show class for assembly
-
-class ShowAsm a where
-    showAsm :: a -> Builder
-
-data AnyShowAsm where
-    AnyShowAsm :: ShowAsm a => a -> AnyShowAsm
-
-instance ShowAsm AnyShowAsm where
-    showAsm (AnyShowAsm a) = showAsm a
-
+--
+--eol :: Builder
+--eol = char8 '\n'

@@ -1,5 +1,5 @@
 {-
-    Compilation Output
+    Code Builder
 
     This file is part of AEx.
     Copyright (C) 2016 Jeffrey Sharp
@@ -18,34 +18,35 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts      #-}
 
-module Aex.Output where
+module Aex.Code
+    ( module Aex.Asm
+    , Code, Line
+    ) where
 
-import Aex.Code
-import Aex.Message
+import Aex.Asm
 import Aex.Util.Accum
-import Control.Monad.State.Class
+import Data.ByteString.Builder
+import Data.Monoid
 
---------------------------------------------------------------------------------
+-- | An accumulator for rendered code.
+newtype Code = Code Builder
 
-data Output = Output
-    { outCode :: Code
-    , outLog  :: Log
-    }
+instance Empty Code where
+    empty = Code ""
 
-instance Empty Output where
-    empty = Output empty empty
+instance ShowAsm a => Accum a Code where
+    Code c +> a = Code $ c <> showAsm a
 
-instance ShowAsm a => Accum (Line a) Output where
-    Output c l +> a = Output (c +> a) l
 
-instance Accum Message Output where
-    Output c l +> m = Output c (l +> m)
+-- | A value that is rendered to code with a trailing newline.
+newtype Line a = Line a
+    deriving (Show)
 
-putCode :: (MonadState Output m, ShowAsm a) => Line a -> m ()
-putCode c = modify (+> c)
+instance ShowAsm a => ShowAsm (Line a) where
+    showAsm (Line a) = showAsm a <> eol
 
-putMessage :: MonadState Output m => Message -> m ()
-putMessage m = modify (+> m)
+eol :: Builder
+eol = char8 '\n'
