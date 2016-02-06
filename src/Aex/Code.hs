@@ -18,35 +18,9 @@
     along with AEx.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Aex.Code
     ( module Aex.Asm
-    , Code, Line
     ) where
 
 import Aex.Asm
-import Aex.Util.Accum
-import Data.ByteString.Builder
-import Data.Monoid
 
--- | An accumulator for rendered code.
-newtype Code = Code Builder
-
-instance Empty Code where
-    empty = Code ""
-
-instance ShowAsm a => Accum a Code where
-    Code c +> a = Code $ c <> showAsm a
-
-
--- | A value that is rendered to code with a trailing newline.
-newtype Line a = Line a
-    deriving (Show)
-
-instance ShowAsm a => ShowAsm (Line a) where
-    showAsm (Line a) = showAsm a <> eol
-
-eol :: Builder
-eol = char8 '\n'
